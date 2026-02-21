@@ -295,8 +295,8 @@ export class DepwatchApp {
   }
 
   private async loadData() {
-    this.progress = { done: 0, total: 10 };
-    this.dashboardView.setProgress(0, 10);
+    this.progress = { done: 0, total: 11 };
+    this.dashboardView.setProgress(0, 11);
     this.tui.requestRender();
 
     try {

@@ -26,7 +26,7 @@ async function collectAll(onProgress?: (done: number, total: number) => void): P
     totalSizeStr: "—", reclaimableSizeStr: "—",
   };
 
-  const total = 10;
+  const total = 11; // 10 collectors + link map
   let done = 0;
   function track<T>(p: Promise<T>, fallback: T): Promise<T> {
     return settle(p, fallback).then((v) => {
@@ -50,12 +50,14 @@ async function collectAll(onProgress?: (done: number, total: number) => void): P
       track(getTotalDiskSize(), 0),
     ]);
 
-  // Build link map from all package names
+  // Build link map from all package names (scans ~/projects for usage)
   const packageNames = [
     ...brewData.packages.map((p) => p.name),
     ...npmGlobalsData.packages.map((p) => p.name),
   ];
   const links = await buildLinkMap(packageNames);
+  done++;
+  onProgress?.(done, total);
 
   const data: CollectedData = {
     brew: brewData,
