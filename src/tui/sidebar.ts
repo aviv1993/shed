@@ -52,6 +52,14 @@ export class Sidebar implements Component {
     return this.items[this.selectedIndex].tab ?? "dashboard";
   }
 
+  selectTab(tab: SidebarTab) {
+    const idx = this.items.findIndex((item) => item.tab === tab);
+    if (idx >= 0) {
+      this.selectedIndex = idx;
+      this.onChange?.(tab);
+    }
+  }
+
   invalidate(): void {}
 
   handleInput(data: string): void {

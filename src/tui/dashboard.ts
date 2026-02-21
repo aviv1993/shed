@@ -1,14 +1,22 @@
 import type { Component } from "@mariozechner/pi-tui";
-import { visibleWidth } from "@mariozechner/pi-tui";
+import { matchesKey, visibleWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { CollectedData } from "../types.js";
+import type { SidebarTab } from "./sidebar.js";
 import { formatBytes, renderProgressBar } from "../utils.js";
+
+const ROW_TABS: SidebarTab[] = [
+  "brew", "npm", "node-modules", "docker", "apps", "ides",
+];
 
 export class DashboardView implements Component {
   private data: CollectedData | null = null;
   private stale = false;
   private progressDone: number | null = null;
   private progressTotal: number | null = null;
+  private selectedIndex = 0;
+  focused = false;
+  onNavigate?: (tab: SidebarTab) => void;
 
   setData(data: CollectedData, stale = false) {
     this.data = data;
@@ -21,6 +29,18 @@ export class DashboardView implements Component {
   }
 
   invalidate(): void {}
+
+  handleInput(data: string): void {
+    if (!this.data) return;
+
+    if (matchesKey(data, "up") || matchesKey(data, "k")) {
+      if (this.selectedIndex > 0) this.selectedIndex--;
+    } else if (matchesKey(data, "down") || matchesKey(data, "j")) {
+      if (this.selectedIndex < ROW_TABS.length - 1) this.selectedIndex++;
+    } else if (matchesKey(data, "enter") || matchesKey(data, "right")) {
+      this.onNavigate?.(ROW_TABS[this.selectedIndex]);
+    }
+  }
 
   render(width: number): string[] {
     const lines: string[] = [];
@@ -86,10 +106,20 @@ export class DashboardView implements Component {
     ));
     lines.push(pad + chalk.dim("─".repeat(Math.min(col1W + col2W + col3W, maxW))));
 
-    for (const [cat, size, reclaim] of rows) {
+    for (let i = 0; i < rows.length; i++) {
+      const [cat, size, reclaim] = rows[i];
+      const isSelected = i === this.selectedIndex;
+      const prefix = isSelected && this.focused
+        ? chalk.cyan("▸ ")
+        : isSelected
+          ? chalk.dim("▸ ")
+          : "  ";
+
+      const catStr = isSelected && this.focused ? chalk.cyan(cat) : cat;
+
       lines.push(
-        pad +
-        padR(cat, col1W) +
+        pad + prefix +
+        padR(catStr, col1W - 2) +
         padR(chalk.bold(size), col2W) +
         chalk.dim(reclaim)
       );
@@ -112,8 +142,8 @@ export class DashboardView implements Component {
 
     lines.push(pad + chalk.dim("─".repeat(Math.min(col1W + col2W + col3W, maxW))));
     lines.push(
-      pad +
-      padR(chalk.bold("Total"), col1W) +
+      pad + "  " +
+      padR(chalk.bold("Total"), col1W - 2) +
       padR(chalk.bold.yellow(formatBytes(totalDevBytes)), col2W) +
       chalk.green(formatBytes(totalReclaimable))
     );
@@ -133,7 +163,7 @@ export class DashboardView implements Component {
   }
 
   getFooterHint(): string {
-    return "↑↓ navigate categories";
+    return "↑↓ navigate  Enter/→ open";
   }
 }
 

@@ -25,11 +25,8 @@ type ViewState =
 
 export class PackageListView implements Component {
   private items: PackageItem[] = [];
-  private filteredItems: PackageItem[] = [];
   private selectedIndex = 0;
   private scrollOffset = 0;
-  private filter = "";
-  private isFilterMode = false;
   private links: LinkMap = new Map();
   private mode: "brew" | "npm" = "brew";
   private state: ViewState = { mode: "list" };
@@ -47,7 +44,8 @@ export class PackageListView implements Component {
       isDep: !p.installedOnRequest,
       dependencies: p.dependencies,
     }));
-    this.applyFilter();
+    this.selectedIndex = Math.min(this.selectedIndex, Math.max(this.items.length - 1, 0));
+    this.scrollOffset = 0;
   }
 
   setNpmData(packages: NpmGlobalPackage[], links: LinkMap) {
@@ -59,7 +57,8 @@ export class PackageListView implements Component {
       description: p.description,
       sizeBytes: p.sizeBytes,
     }));
-    this.applyFilter();
+    this.selectedIndex = Math.min(this.selectedIndex, Math.max(this.items.length - 1, 0));
+    this.scrollOffset = 0;
   }
 
   invalidate(): void {}
@@ -128,62 +127,21 @@ export class PackageListView implements Component {
   }
 
   private handleListInput(data: string) {
-    if (this.isFilterMode) {
-      if (matchesKey(data, "escape")) {
-        if (this.filter) {
-          this.filter = "";
-          this.applyFilter();
-        } else {
-          this.isFilterMode = false;
-        }
-        return;
-      }
-      if (matchesKey(data, "enter")) {
-        this.isFilterMode = false;
-        return;
-      }
-      if (matchesKey(data, "backspace")) {
-        this.filter = this.filter.slice(0, -1);
-        this.applyFilter();
-        return;
-      }
-      if (data.length === 1 && data >= " ") {
-        this.filter += data;
-        this.applyFilter();
-        return;
-      }
-    }
-
     if (matchesKey(data, "up") || matchesKey(data, "k")) {
       if (this.selectedIndex > 0) {
         this.selectedIndex--;
         this.adjustScroll();
       }
     } else if (matchesKey(data, "down") || matchesKey(data, "j")) {
-      if (this.selectedIndex < this.filteredItems.length - 1) {
+      if (this.selectedIndex < this.items.length - 1) {
         this.selectedIndex++;
         this.adjustScroll();
       }
-    } else if (matchesKey(data, "enter")) {
-      if (this.filteredItems[this.selectedIndex]) {
-        this.state = { mode: "detail", item: this.filteredItems[this.selectedIndex] };
+    } else if (matchesKey(data, "enter") || matchesKey(data, "right")) {
+      if (this.items[this.selectedIndex]) {
+        this.state = { mode: "detail", item: this.items[this.selectedIndex] };
       }
-    } else if (data === "/" || data === "f") {
-      this.isFilterMode = true;
-    } else if (data.length === 1 && data >= " " && !this.isFilterMode) {
-      this.isFilterMode = true;
-      this.filter = data;
-      this.applyFilter();
     }
-  }
-
-  private applyFilter() {
-    const f = this.filter.toLowerCase();
-    this.filteredItems = f
-      ? this.items.filter((i) => i.name.toLowerCase().includes(f) || i.description.toLowerCase().includes(f))
-      : [...this.items];
-    this.selectedIndex = Math.min(this.selectedIndex, Math.max(this.filteredItems.length - 1, 0));
-    this.scrollOffset = 0;
   }
 
   private adjustScroll() {
@@ -214,19 +172,11 @@ export class PackageListView implements Component {
 
     lines.push("");
 
-    if (this.isFilterMode || this.filter) {
-      const filterText = this.filter || "";
-      lines.push(
-        pad + chalk.cyan("Filter: ") + filterText + (this.isFilterMode ? chalk.cyan("▌") : "")
-      );
-      lines.push("");
-    }
-
     const title = this.mode === "brew" ? "Homebrew Packages" : "npm Global Packages";
-    lines.push(pad + chalk.bold(title) + chalk.dim(` (${this.filteredItems.length})`));
+    lines.push(pad + chalk.bold(title) + chalk.dim(` (${this.items.length})`));
     lines.push("");
 
-    if (this.filteredItems.length === 0) {
+    if (this.items.length === 0) {
       lines.push(pad + chalk.dim("No packages found"));
       return lines;
     }
@@ -239,7 +189,7 @@ export class PackageListView implements Component {
       this.scrollOffset = this.selectedIndex;
     }
 
-    const visibleSlice = this.filteredItems.slice(
+    const visibleSlice = this.items.slice(
       this.scrollOffset,
       this.scrollOffset + maxVisible
     );
@@ -275,8 +225,8 @@ export class PackageListView implements Component {
       lines.push(pad + truncateToWidth(line, maxW));
     }
 
-    if (this.filteredItems.length > maxVisible) {
-      const total = this.filteredItems.length;
+    if (this.items.length > maxVisible) {
+      const total = this.items.length;
       const pos = this.scrollOffset + 1;
       lines.push("");
       lines.push(pad + chalk.dim(`${pos}–${Math.min(pos + maxVisible - 1, total)} of ${total}`));
@@ -333,9 +283,6 @@ export class PackageListView implements Component {
       lines.push("");
       lines.push(pad + chalk.dim("No project links found"));
     }
-
-    lines.push("");
-    lines.push(pad + chalk.dim("Esc/q back  Enter uninstall"));
 
     return lines;
   }
@@ -394,11 +341,11 @@ export class PackageListView implements Component {
 
   getFooterHint(): string {
     switch (this.state.mode) {
-      case "detail": return "Enter/Del uninstall  Esc back";
+      case "detail": return "Enter/Del uninstall  ←/Esc back";
       case "confirm": return "y confirm  any key cancel";
       case "uninstalling": return "";
       case "done": return "Enter continue";
-      default: return this.filter ? "↑↓ navigate  Esc clear filter" : "↑↓ navigate  Enter detail  / filter";
+      default: return "↑↓ navigate  Enter/→ detail";
     }
   }
 }

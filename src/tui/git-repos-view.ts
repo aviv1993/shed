@@ -211,11 +211,13 @@ export class GitReposView implements Component {
       return lines;
     }
 
+    const nmTotal = this.data.totalNodeModulesBytes;
     lines.push(
       pad + chalk.dim(
         `${this.data.repos.length} repos, ` +
         `${formatBytes(this.data.totalBytes)} total, ` +
-        `${formatBytes(this.data.totalGitBytes)} in .git`
+        `${formatBytes(this.data.totalGitBytes)} in .git` +
+        (nmTotal > 0 ? `, ${formatBytes(nmTotal)} in node_modules` : "")
       )
     );
     lines.push(pad + chalk.dim(`Scanned: ~/*/  (up to 3 levels deep)`));
@@ -254,9 +256,15 @@ export class GitReposView implements Component {
       }
 
       const size = chalk.yellow(formatBytes(repo.sizeBytes));
-      const gitSize = chalk.dim(` (.git ${formatBytes(repo.gitSizeBytes)})`);
+      const gitSize = chalk.dim(` (.git ${formatBytes(repo.gitSizeBytes)}`
+        + (repo.nodeModulesSizeBytes > 0 ? `, nm ${formatBytes(repo.nodeModulesSizeBytes)}` : "")
+        + ")");
       lines.push(pad + truncateToWidth(prefix + label + "  " + size + gitSize, maxW));
-      lines.push(pad + "    " + chalk.dim(repo.path));
+      const extras: string[] = [repo.path];
+      if (repo.linkedDockerImages.length > 0) {
+        extras.push("docker: " + repo.linkedDockerImages.join(", "));
+      }
+      lines.push(pad + "    " + chalk.dim(extras.join("  ")));
     }
 
     if (this.data.repos.length > maxVisible) {

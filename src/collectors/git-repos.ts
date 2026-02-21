@@ -8,12 +8,15 @@ export interface GitRepoEntry {
   path: string;
   sizeBytes: number;
   gitSizeBytes: number; // size of .git directory alone
+  nodeModulesSizeBytes: number;
+  linkedDockerImages: string[];
 }
 
 export interface GitReposData {
   repos: GitRepoEntry[];
   totalBytes: number;
   totalGitBytes: number;
+  totalNodeModulesBytes: number;
 }
 
 const SKIP_DIRS = new Set([
@@ -29,7 +32,7 @@ export async function collectGitRepos(): Promise<GitReposData> {
   try {
     topLevelDirs = await readdir(home);
   } catch {
-    return { repos: [], totalBytes: 0, totalGitBytes: 0 };
+    return { repos: [], totalBytes: 0, totalGitBytes: 0, totalNodeModulesBytes: 0 };
   }
 
   const searchDirs = topLevelDirs.filter(
@@ -54,8 +57,9 @@ export async function collectGitRepos(): Promise<GitReposData> {
   repos.sort((a, b) => b.sizeBytes - a.sizeBytes);
   const totalBytes = repos.reduce((s, r) => s + r.sizeBytes, 0);
   const totalGitBytes = repos.reduce((s, r) => s + r.gitSizeBytes, 0);
+  const totalNodeModulesBytes = repos.reduce((s, r) => s + r.nodeModulesSizeBytes, 0);
 
-  return { repos, totalBytes, totalGitBytes };
+  return { repos, totalBytes, totalGitBytes, totalNodeModulesBytes };
 }
 
 async function findGitRepos(
@@ -75,15 +79,20 @@ async function findGitRepos(
   if (entries.includes(".git")) {
     // This is a git repo
     const gitDir = join(dirPath, ".git");
-    const [totalSize, gitSize] = await Promise.all([
+    const hasNodeModules = entries.includes("node_modules");
+    const nmDir = join(dirPath, "node_modules");
+    const [totalSize, gitSize, nmSize] = await Promise.all([
       duSize(dirPath),
       duSize(gitDir),
+      hasNodeModules ? duSize(nmDir) : Promise.resolve(0),
     ]);
     results.push({
       name: basename(dirPath),
       path: dirPath,
       sizeBytes: totalSize,
       gitSizeBytes: gitSize,
+      nodeModulesSizeBytes: nmSize,
+      linkedDockerImages: [],
     });
     // Don't recurse into git repos (submodules would be found via .git files anyway)
     return;

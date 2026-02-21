@@ -45,7 +45,7 @@ async function collectAll(onProgress?: (done: number, total: number) => void): P
       track(collectDocker(), defaultDocker),
       track(collectApps(), { apps: [], totalBytes: 0 } as AppsData),
       track(collectDevCaches(), { entries: [], totalBytes: 0, groups: [] } as DevCachesData),
-      track(collectGitRepos(), { repos: [], totalBytes: 0, totalGitBytes: 0 } as GitReposData),
+      track(collectGitRepos(), { repos: [], totalBytes: 0, totalGitBytes: 0, totalNodeModulesBytes: 0 } as GitReposData),
       track(collectCleanupActions(), { actions: [] } as CleanupActionsData),
       track(getTotalDiskSize(), 0),
     ]);
@@ -58,6 +58,33 @@ async function collectAll(onProgress?: (done: number, total: number) => void): P
   const links = await buildLinkMap(packageNames);
   done++;
   onProgress?.(done, total);
+
+  // Cross-reference docker images ↔ git repos
+  if (gitReposData.repos.length > 0) {
+    const reposByName = new Map(gitReposData.repos.map((r) => [r.name, r]));
+    for (const img of dockerData.images) {
+      for (const proj of img.linkedProjects) {
+        const repo = reposByName.get(proj);
+        if (repo) {
+          const tag = img.tag && img.tag !== "<none>" ? `${img.repository}:${img.tag}` : img.repository;
+          if (!repo.linkedDockerImages.includes(tag)) {
+            repo.linkedDockerImages.push(tag);
+          }
+        }
+      }
+    }
+    for (const container of dockerData.containers) {
+      for (const proj of container.linkedProjects) {
+        const repo = reposByName.get(proj);
+        if (repo) {
+          const tag = container.image;
+          if (!repo.linkedDockerImages.includes(tag)) {
+            repo.linkedDockerImages.push(tag);
+          }
+        }
+      }
+    }
+  }
 
   const data: CollectedData = {
     brew: brewData,

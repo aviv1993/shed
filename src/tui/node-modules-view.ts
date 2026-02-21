@@ -106,21 +106,21 @@ export class NodeModulesView implements Component {
           }
         } else if (matchesKey(data, "down") || matchesKey(data, "j")) {
           this.moveToNextSelectable(1);
-        } else if (matchesKey(data, "enter") || matchesKey(data, "right")) {
+        } else if (matchesKey(data, "right")) {
           const item = this.items[this.selectedIndex];
           if (item?.type === "project" && item.entry) {
             this.toggleExpand(item.entry);
+          }
+        } else if (matchesKey(data, "enter") || matchesKey(data, "delete") || matchesKey(data, "backspace")) {
+          const item = this.items[this.selectedIndex];
+          if (item?.type === "project" && item.entry) {
+            this.state = { mode: "confirm", entry: item.entry };
           }
         } else if (matchesKey(data, "left")) {
           const item = this.items[this.selectedIndex];
           if (item?.type === "project" && item.entry && this.expandedProjects.has(item.entry.path)) {
             this.expandedProjects.delete(item.entry.path);
             this.buildItemList();
-          }
-        } else if (matchesKey(data, "delete") || matchesKey(data, "backspace")) {
-          const item = this.items[this.selectedIndex];
-          if (item?.type === "project" && item.entry) {
-            this.state = { mode: "confirm", entry: item.entry };
           }
         }
         break;
@@ -294,7 +294,7 @@ export class NodeModulesView implements Component {
       case "confirm": return "y confirm  any key cancel";
       case "deleting": return "";
       case "done": return "Enter continue";
-      default: return "↑↓ navigate  Enter/→ expand  ← collapse  Del delete";
+      default: return "↑↓ navigate  → expand  ← collapse  Enter/Del delete";
     }
   }
 }

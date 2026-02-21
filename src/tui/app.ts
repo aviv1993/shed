@@ -84,6 +84,14 @@ export class DepwatchApp {
       this.tui.requestRender();
     };
 
+    // Wire dashboard navigation
+    this.dashboardView.onNavigate = (tab) => {
+      this.sidebar.selectTab(tab);
+      this.focusOnContent = true;
+      this.updateFocusState();
+      this.tui.requestRender();
+    };
+
     // Wire refresh callbacks
     const refreshFn = () => this.refresh();
     this.cleanupView.onRefreshData = refreshFn;
@@ -168,6 +176,7 @@ export class DepwatchApp {
     this.sidebar.focused = !contentFocused;
     this.split.setFocus(contentFocused ? "right" : "left");
 
+    this.dashboardView.focused = contentFocused;
     this.appsView.focused = contentFocused;
     this.brewListView.focused = contentFocused;
     this.npmListView.focused = contentFocused;
