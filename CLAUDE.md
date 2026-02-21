@@ -37,3 +37,9 @@ macOS Dev Dependency Manager TUI — shows disk usage for dev tools and lets you
 - Views with async operations use `onRequestRender?.()` callback to trigger re-renders
 - Deletion shows animated braille spinner with elapsed time via `setInterval`
 - `collectAll` reports progress via callback for dashboard progress bar
+- Dashboard rows are selectable — Enter/→ navigates to the corresponding screen via `sidebar.selectTab()`
+- Keybinding convention: →/Enter opens detail/expand, ←/Esc goes back, Enter/Del triggers delete on items
+- Node modules: → expands packages, Enter triggers delete confirmation
+- Git repos track `nodeModulesSizeBytes` and `linkedDockerImages` (cross-referenced from docker collector)
+- Docker↔git linking: `index.ts` matches docker `linkedProjects` to git repo `name` after all collectors finish
+- Context-aware footer bar: each view exposes `getFooterHint()` for key hints
