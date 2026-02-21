@@ -127,6 +127,7 @@ export class GitReposView implements Component {
     }
 
     this.state = { mode: "confirm", repo, warnings };
+    this.onRequestRender?.();
   }
 
   private startSpinner() {
