@@ -5,7 +5,7 @@ import chalk from "chalk";
 import type { NodeModulesData, NodeModulesEntry, NodeModulePackage } from "../collectors/node-modules.js";
 import { scanNodeModulesPackages } from "../collectors/node-modules.js";
 import { formatBytes } from "../utils.js";
-import { spinnerFrame, formatElapsed } from "./spinner.js";
+
 
 interface FlatItem {
   type: "project" | "package";
@@ -201,12 +201,6 @@ export class NodeModulesView implements Component {
       lines.push(pad + chalk.dim("Reinstall with ") + chalk.white("npm install") + chalk.dim(" / ") + chalk.white("pnpm install"));
       lines.push("");
       lines.push(pad + chalk.white("Press ") + chalk.bold.red("y") + chalk.white(" to confirm, any other key to cancel"));
-      return lines;
-    }
-
-    if (this.state.mode === "deleting") {
-      const entry = (this.state as { mode: "deleting"; entry: NodeModulesEntry }).entry;
-      lines.push(pad + chalk.yellow(`Deleting ${entry.projectName}... ${spinnerFrame(this.spinnerTick)} ${formatElapsed(this.spinnerStart)}`));
       return lines;
     }
 

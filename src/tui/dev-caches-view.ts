@@ -4,7 +4,7 @@ import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { DevCachesData, DevCacheEntry, DevCacheGroup } from "../collectors/dev-caches.js";
 import { formatBytes } from "../utils.js";
-import { spinnerFrame, formatElapsed } from "./spinner.js";
+
 
 interface FlatItem {
   type: "group" | "entry";
@@ -182,10 +182,6 @@ export class DevCachesView implements Component {
 
     if (this.state.mode === "confirm") {
       return this.renderConfirm(width, lines);
-    }
-    if (this.state.mode === "deleting") {
-      lines.push(pad + chalk.yellow(`Deleting ${this.state.entry.label}... ${spinnerFrame(this.spinnerTick)} ${formatElapsed(this.spinnerStart)}`));
-      return lines;
     }
     if (this.state.mode === "done") {
       return this.renderDone(width, lines);

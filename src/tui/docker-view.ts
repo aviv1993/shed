@@ -4,7 +4,7 @@ import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { DockerData, DockerImage, DockerContainer, DockerVolume } from "../collectors/docker.js";
 import { formatBytes } from "../utils.js";
-import { spinnerFrame, formatElapsed } from "./spinner.js";
+
 
 interface FlatItem {
   type: "image" | "container" | "volume" | "header" | "build-cache";
@@ -251,11 +251,6 @@ export class DockerView implements Component {
 
     if (this.state.mode === "confirm") {
       return this.renderConfirm(width, lines);
-    }
-    if (this.state.mode === "deleting") {
-      const item = (this.state as { mode: "deleting"; item: FlatItem }).item;
-      lines.push(pad + chalk.yellow(`Deleting ${item.label}... ${spinnerFrame(this.spinnerTick)} ${formatElapsed(this.spinnerStart)}`));
-      return lines;
     }
     if (this.state.mode === "done") {
       return this.renderDone(width, lines);

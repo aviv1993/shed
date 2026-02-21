@@ -6,8 +6,6 @@ import type { BrewPackage } from "../collectors/brew.js";
 import type { NpmGlobalPackage } from "../collectors/npm-globals.js";
 import type { LinkMap } from "../types.js";
 import { formatBytes } from "../utils.js";
-import { spinnerFrame, formatElapsed } from "./spinner.js";
-
 interface PackageItem {
   name: string;
   version: string;
@@ -185,8 +183,6 @@ export class PackageListView implements Component {
         return this.renderDetail(width);
       case "confirm":
         return this.renderConfirm(width);
-      case "uninstalling":
-        return this.renderUninstalling(width);
       case "done":
         return this.renderDone(width);
       default:
@@ -331,17 +327,6 @@ export class PackageListView implements Component {
 
     lines.push("");
     lines.push(pad + chalk.white("Press ") + chalk.bold.red("y") + chalk.white(" to confirm, any other key to cancel"));
-
-    return lines;
-  }
-
-  private renderUninstalling(width: number): string[] {
-    const item = (this.state as { mode: "uninstalling"; item: PackageItem }).item;
-    const lines: string[] = [];
-    const pad = "  ";
-
-    lines.push("");
-    lines.push(pad + chalk.yellow("Uninstalling " + item.name + "..."));
 
     return lines;
   }

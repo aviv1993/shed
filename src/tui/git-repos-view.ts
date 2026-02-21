@@ -5,7 +5,7 @@ import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { GitReposData, GitRepoEntry } from "../collectors/git-repos.js";
 import { formatBytes } from "../utils.js";
-import { spinnerFrame, formatElapsed } from "./spinner.js";
+
 
 const execFileAsync = promisify(execFile);
 
@@ -78,6 +78,7 @@ export class GitReposView implements Component {
 
   private async checkAndConfirm(repo: GitRepoEntry) {
     this.state = { mode: "checking", repo };
+    this.startSpinner();
     const warnings: string[] = [];
 
     try {
@@ -129,6 +130,7 @@ export class GitReposView implements Component {
       // If git commands fail, proceed without warnings
     }
 
+    this.stopSpinner();
     this.state = { mode: "confirm", repo, warnings };
     this.onRequestRender?.();
   }
@@ -182,19 +184,8 @@ export class GitReposView implements Component {
       return lines;
     }
 
-    if (this.state.mode === "checking") {
-      lines.push(pad + chalk.yellow("Checking " + (this.state as any).repo.name + "..."));
-      return lines;
-    }
-
     if (this.state.mode === "confirm") {
       return this.renderConfirm(width, lines);
-    }
-
-    if (this.state.mode === "deleting") {
-      const repo = (this.state as { mode: "deleting"; repo: GitRepoEntry }).repo;
-      lines.push(pad + chalk.yellow(`Deleting ${repo.name}... ${spinnerFrame(this.spinnerTick)} ${formatElapsed(this.spinnerStart)}`));
-      return lines;
     }
 
     if (this.state.mode === "done") {

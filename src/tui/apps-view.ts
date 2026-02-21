@@ -4,7 +4,7 @@ import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { AppsData, AppEntry } from "../collectors/apps.js";
 import { formatBytes } from "../utils.js";
-import { spinnerFrame, formatElapsed } from "./spinner.js";
+
 
 type ViewState =
   | { mode: "list" }
@@ -130,12 +130,6 @@ export class AppsView implements Component {
       lines.push(pad + chalk.dim("Path: ") + `/Applications/${app.name}`);
       lines.push("");
       lines.push(pad + chalk.white("Press ") + chalk.bold.red("y") + chalk.white(" to confirm, any other key to cancel"));
-      return lines;
-    }
-
-    if (this.state.mode === "deleting") {
-      const app = (this.state as { mode: "deleting"; app: AppEntry }).app;
-      lines.push(pad + chalk.yellow(`Deleting ${app.name}... ${spinnerFrame(this.spinnerTick)} ${formatElapsed(this.spinnerStart)}`));
       return lines;
     }
 
