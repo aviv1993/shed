@@ -1,3 +1,5 @@
+import { stat, readFile } from "node:fs/promises";
+import { join, basename } from "node:path";
 import { run } from "../utils.js";
 
 export interface DockerImage {
@@ -7,6 +9,7 @@ export interface DockerImage {
   sizeBytes: number;
   sizeStr: string;
   linkedProjects: string[];
+  linkedProjectPaths: string[];
 }
 
 export interface DockerContainer {
@@ -15,6 +18,7 @@ export interface DockerContainer {
   state: string;
   sizeStr: string;
   linkedProjects: string[];
+  linkedProjectPaths: string[];
 }
 
 export interface DockerVolume {
@@ -82,6 +86,7 @@ export async function collectDocker(): Promise<DockerData> {
         sizeBytes: parseSize(img.Size),
         sizeStr: img.Size,
         linkedProjects: [],
+        linkedProjectPaths: [],
       });
     } catch {}
   }
@@ -98,6 +103,7 @@ export async function collectDocker(): Promise<DockerData> {
         state: c.State,
         sizeStr: c.Size ?? "—",
         linkedProjects: [],
+        linkedProjectPaths: [],
       });
     } catch {}
   }
@@ -173,6 +179,37 @@ function formatDockerSize(bytes: number): string {
   return `${(bytes / 1024 ** 3).toFixed(1)}GB`;
 }
 
+async function readComposeImages(workDir: string): Promise<string[]> {
+  const composeNames = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"];
+  for (const name of composeNames) {
+    try {
+      const content = await readFile(join(workDir, name), "utf-8");
+      const images: string[] = [];
+      for (const line of content.split("\n")) {
+        const match = line.match(/^\s+image:\s*["']?([^\s"'#]+)/);
+        if (match) images.push(match[1]);
+      }
+      if (images.length > 0) return images;
+    } catch {}
+  }
+  return [];
+}
+
+async function isGitRepo(dirPath: string): Promise<boolean> {
+  try {
+    const s = await stat(join(dirPath, ".git"));
+    return s.isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function extractProjectRoot(sourcePath: string): string | null {
+  // Walk up from bind mount source to find the root project dir (closest to /Users/<user>/)
+  const match = sourcePath.match(/^(\/Users\/[^/]+\/[^/]+)/);
+  return match ? match[1] : null;
+}
+
 async function linkDockerProjects(containers: DockerContainer[], images: DockerImage[], volumes: DockerVolume[]) {
   // Link containers via inspect (bind mounts + compose labels)
   for (const container of containers) {
@@ -187,6 +224,12 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
       const mounts = inspectData?.Mounts ?? [];
       for (const mount of mounts) {
         if (mount.Type === "bind" && mount.Source?.startsWith("/Users/")) {
+          const projectRoot = extractProjectRoot(mount.Source);
+          if (projectRoot && await isGitRepo(projectRoot)) {
+            if (!container.linkedProjectPaths.includes(projectRoot)) {
+              container.linkedProjectPaths.push(projectRoot);
+            }
+          }
           const projectMatch = mount.Source.match(/^\/Users\/[^/]+\/([^/]+)/);
           if (projectMatch && !container.linkedProjects.includes(projectMatch[1])) {
             container.linkedProjects.push(projectMatch[1]);
@@ -198,6 +241,11 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
       const labels = inspectData?.Config?.Labels ?? {};
       const workDir = labels["com.docker.compose.project.working_dir"];
       if (workDir) {
+        if (await isGitRepo(workDir)) {
+          if (!container.linkedProjectPaths.includes(workDir)) {
+            container.linkedProjectPaths.push(workDir);
+          }
+        }
         const projectMatch = workDir.match(/^\/Users\/[^/]+\/([^/]+)/);
         if (projectMatch && !container.linkedProjects.includes(projectMatch[1])) {
           container.linkedProjects.push(projectMatch[1]);
@@ -210,6 +258,11 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
           for (const proj of container.linkedProjects) {
             if (!img.linkedProjects.includes(proj)) {
               img.linkedProjects.push(proj);
+            }
+          }
+          for (const path of container.linkedProjectPaths) {
+            if (!img.linkedProjectPaths.includes(path)) {
+              img.linkedProjectPaths.push(path);
             }
           }
         }
@@ -228,6 +281,11 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
       const composeProject = labels["com.docker.compose.project"];
       const workDir = labels["com.docker.compose.project.working_dir"];
       if (workDir) {
+        if (await isGitRepo(workDir)) {
+          if (!img.linkedProjectPaths.includes(workDir)) {
+            img.linkedProjectPaths.push(workDir);
+          }
+        }
         const m = workDir.match(/^\/Users\/[^/]+\/([^/]+)/);
         if (m && !img.linkedProjects.includes(m[1])) {
           img.linkedProjects.push(m[1]);
@@ -236,6 +294,29 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
         img.linkedProjects.push(composeProject);
       }
     } catch {}
+  }
+
+  // Link pulled images via compose files from known working dirs
+  const composeWorkDirs = new Set<string>();
+  for (const c of containers) {
+    for (const p of c.linkedProjectPaths) composeWorkDirs.add(p);
+  }
+  for (const workDir of composeWorkDirs) {
+    const composeImages = await readComposeImages(workDir);
+    const projectName = basename(workDir);
+    for (const composeImg of composeImages) {
+      for (const img of images) {
+        const fullName = `${img.repository}:${img.tag}`;
+        if (fullName === composeImg || img.repository === composeImg) {
+          if (!img.linkedProjects.includes(projectName)) {
+            img.linkedProjects.push(projectName);
+          }
+          if (!img.linkedProjectPaths.includes(workDir)) {
+            img.linkedProjectPaths.push(workDir);
+          }
+        }
+      }
+    }
   }
 
   // Infer project links from volume names (e.g. "findash_db_data" → "findash")

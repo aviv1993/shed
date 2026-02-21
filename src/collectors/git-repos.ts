@@ -26,20 +26,56 @@ const SKIP_DIRS = new Set([
   ".bun", ".cargo", ".rustup", ".pyenv", ".rbenv", ".deno",
 ]);
 
-export async function collectGitRepos(): Promise<GitReposData> {
+export async function collectGitRepos(
+  scanPaths?: { path: string; depth: number }[],
+): Promise<GitReposData> {
   const home = homedir();
+  const repos: GitRepoEntry[] = [];
+
+  if (scanPaths && scanPaths.length > 0) {
+    await Promise.all(
+      scanPaths.map(async ({ path: scanPath, depth: maxDepth }) => {
+        const resolvedPath = scanPath.replace(/^~/, home);
+
+        if (resolvedPath === home) {
+          // Scan all subdirs under home (same as original behavior)
+          await scanHomeDir(home, repos, maxDepth);
+        } else {
+          // Scan directly into the specified directory
+          try {
+            const s = await stat(resolvedPath);
+            if (!s.isDirectory()) return;
+          } catch {
+            return;
+          }
+          await findGitRepos(resolvedPath, repos, 0, maxDepth);
+        }
+      })
+    );
+  } else {
+    // Default: scan home at depth 3
+    await scanHomeDir(home, repos, 3);
+  }
+
+  repos.sort((a, b) => b.sizeBytes - a.sizeBytes);
+  const totalBytes = repos.reduce((s, r) => s + r.sizeBytes, 0);
+  const totalGitBytes = repos.reduce((s, r) => s + r.gitSizeBytes, 0);
+  const totalNodeModulesBytes = repos.reduce((s, r) => s + r.nodeModulesSizeBytes, 0);
+
+  return { repos, totalBytes, totalGitBytes, totalNodeModulesBytes };
+}
+
+async function scanHomeDir(home: string, repos: GitRepoEntry[], maxDepth: number) {
   let topLevelDirs: string[];
   try {
     topLevelDirs = await readdir(home);
   } catch {
-    return { repos: [], totalBytes: 0, totalGitBytes: 0, totalNodeModulesBytes: 0 };
+    return;
   }
 
   const searchDirs = topLevelDirs.filter(
     (d) => !d.startsWith(".") && !SKIP_DIRS.has(d)
   );
-
-  const repos: GitRepoEntry[] = [];
 
   await Promise.all(
     searchDirs.map(async (dirName) => {
@@ -50,24 +86,18 @@ export async function collectGitRepos(): Promise<GitReposData> {
       } catch {
         return;
       }
-      await findGitRepos(dirPath, repos, 0);
+      await findGitRepos(dirPath, repos, 0, maxDepth);
     })
   );
-
-  repos.sort((a, b) => b.sizeBytes - a.sizeBytes);
-  const totalBytes = repos.reduce((s, r) => s + r.sizeBytes, 0);
-  const totalGitBytes = repos.reduce((s, r) => s + r.gitSizeBytes, 0);
-  const totalNodeModulesBytes = repos.reduce((s, r) => s + r.nodeModulesSizeBytes, 0);
-
-  return { repos, totalBytes, totalGitBytes, totalNodeModulesBytes };
 }
 
 async function findGitRepos(
   dirPath: string,
   results: GitRepoEntry[],
   depth: number,
+  maxDepth = 3,
 ): Promise<void> {
-  if (depth > 3) return;
+  if (depth > maxDepth) return;
 
   let entries: string[];
   try {
@@ -109,7 +139,7 @@ async function findGitRepos(
       stat(subPath)
         .then(async (s) => {
           if (s.isDirectory()) {
-            await findGitRepos(subPath, results, depth + 1);
+            await findGitRepos(subPath, results, depth + 1, maxDepth);
           }
         })
         .catch(() => {})

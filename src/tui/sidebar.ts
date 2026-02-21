@@ -11,7 +11,8 @@ export type SidebarTab =
   | "apps"
   | "ides"
   | "git-repos"
-  | "cache-cleanups";
+  | "cache-cleanups"
+  | "settings";
 
 interface SidebarItem {
   tab: SidebarTab | null; // null = separator
@@ -37,6 +38,7 @@ export class Sidebar implements Component {
       { tab: "git-repos", label: "Git Repos" },
       { tab: null, label: "──────────" },
       { tab: "cache-cleanups", label: "Cache Cleanups" },
+      { tab: "settings", label: "Settings" },
     ];
   }
 

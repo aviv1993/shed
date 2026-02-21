@@ -200,6 +200,8 @@ export class NodeModulesView implements Component {
       lines.push(pad + chalk.dim("Size: ") + chalk.yellow(formatBytes(entry.sizeBytes)));
       lines.push(pad + chalk.dim("Reinstall with ") + chalk.white("npm install") + chalk.dim(" / ") + chalk.white("pnpm install"));
       lines.push("");
+      lines.push(pad + chalk.yellow("⚠ Next build will need to reinstall dependencies (npm/pnpm install)"));
+      lines.push("");
       lines.push(pad + chalk.white("Press ") + chalk.bold.red("y") + chalk.white(" to confirm, any other key to cancel"));
       return lines;
     }

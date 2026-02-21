@@ -11,13 +11,14 @@ In an era where a single developer can maintain dozens of repos, spin up contain
 - **Homebrew** — every formula with size, dependency status, and which of your projects use it
 - **npm globals** — globally installed packages with project links
 - **node_modules** — every `node_modules` directory across your projects, expandable to show individual packages
-- **Docker** — images, containers, volumes, and build cache with project links
+- **Docker** — images, containers, volumes, and build cache with project links (auto-detects compose projects)
 - **Apps** — `/Applications` sorted by size
 - **IDEs & Tools** — VS Code, Xcode, Claude, Zig, Bun, CocoaPods, and more, grouped by tool
 - **Git Repos** — all repos found on disk with `.git` size breakdown
-- **Cache Cleanups** — one-click actions for brew cleanup, npm cache clean, docker prune, and more
+- **Cache Cleanups** — one-click actions for brew cleanup, npm cache clean, docker prune, and more (with impact warnings)
+- **Settings** — configure git scan paths and depth levels, persisted across sessions
 
-Everything is interactive: navigate with arrows, expand with Enter/→, and delete with confirmation. Git repos are checked for uncommitted changes and unpushed commits before deletion.
+Everything is interactive: navigate with arrows, expand with Enter/→, and delete with confirmation. Cleanup actions show a warning about the impact (e.g., "Next build will be slower") before running.
 
 ## Install
 
@@ -55,3 +56,11 @@ pnpm build          # compile to dist/
 | `Del` or `Backspace` | Delete selected item (with confirmation) |
 | `r` | Refresh all data |
 | `q` or `Ctrl+C` | Quit |
+
+## Configuration
+
+depwatch stores settings in `~/.config/depwatch/config.json`. You can configure:
+
+- **Git scan paths** — directories to scan for git repos, each with a configurable depth level (1–5)
+
+Access settings from the sidebar's "Settings" tab. Default behavior scans `~/` at depth 3, matching all subdirectories under your home folder.

@@ -14,12 +14,13 @@ import { getTotalDiskSize } from "./utils.js";
 import type { CollectedData } from "./types.js";
 import { DepwatchApp } from "./tui/app.js";
 import { loadCachedData, saveCachedData } from "./cache.js";
+import type { DepwatchConfig } from "./config.js";
 
 async function settle<T>(p: Promise<T>, fallback: T): Promise<T> {
   try { return await p; } catch { return fallback; }
 }
 
-async function collectAll(onProgress?: (done: number, total: number) => void): Promise<CollectedData> {
+async function collectAll(onProgress?: (done: number, total: number) => void, config?: DepwatchConfig): Promise<CollectedData> {
   const defaultDocker: DockerData = {
     online: false, images: [], containers: [], volumes: [],
     buildCacheSizeStr: "—", buildCacheReclaimableStr: "—",
@@ -45,7 +46,7 @@ async function collectAll(onProgress?: (done: number, total: number) => void): P
       track(collectDocker(), defaultDocker),
       track(collectApps(), { apps: [], totalBytes: 0 } as AppsData),
       track(collectDevCaches(), { entries: [], totalBytes: 0, groups: [] } as DevCachesData),
-      track(collectGitRepos(), { repos: [], totalBytes: 0, totalGitBytes: 0, totalNodeModulesBytes: 0 } as GitReposData),
+      track(collectGitRepos(config?.gitScanPaths), { repos: [], totalBytes: 0, totalGitBytes: 0, totalNodeModulesBytes: 0 } as GitReposData),
       track(collectCleanupActions(), { actions: [] } as CleanupActionsData),
       track(getTotalDiskSize(), 0),
     ]);
@@ -62,26 +63,36 @@ async function collectAll(onProgress?: (done: number, total: number) => void): P
   // Cross-reference docker images ↔ git repos
   if (gitReposData.repos.length > 0) {
     const reposByName = new Map(gitReposData.repos.map((r) => [r.name, r]));
+    const reposByPath = new Map(gitReposData.repos.map((r) => [r.path, r]));
+
+    const linkRepoToDocker = (repo: typeof gitReposData.repos[0], imageTag: string) => {
+      if (!repo.linkedDockerImages.includes(imageTag)) {
+        repo.linkedDockerImages.push(imageTag);
+      }
+    };
+
     for (const img of dockerData.images) {
+      const tag = img.tag && img.tag !== "<none>" ? `${img.repository}:${img.tag}` : img.repository;
+      // Match by full path first
+      for (const path of img.linkedProjectPaths) {
+        const repo = reposByPath.get(path);
+        if (repo) linkRepoToDocker(repo, tag);
+      }
+      // Fall back to basename matching
       for (const proj of img.linkedProjects) {
         const repo = reposByName.get(proj);
-        if (repo) {
-          const tag = img.tag && img.tag !== "<none>" ? `${img.repository}:${img.tag}` : img.repository;
-          if (!repo.linkedDockerImages.includes(tag)) {
-            repo.linkedDockerImages.push(tag);
-          }
-        }
+        if (repo) linkRepoToDocker(repo, tag);
       }
     }
     for (const container of dockerData.containers) {
+      const tag = container.image;
+      for (const path of container.linkedProjectPaths) {
+        const repo = reposByPath.get(path);
+        if (repo) linkRepoToDocker(repo, tag);
+      }
       for (const proj of container.linkedProjects) {
         const repo = reposByName.get(proj);
-        if (repo) {
-          const tag = container.image;
-          if (!repo.linkedDockerImages.includes(tag)) {
-            repo.linkedDockerImages.push(tag);
-          }
-        }
+        if (repo) linkRepoToDocker(repo, tag);
       }
     }
   }

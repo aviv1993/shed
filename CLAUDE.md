@@ -18,11 +18,13 @@ macOS Dev Dependency Manager TUI — shows disk usage for dev tools and lets you
 
 ## Architecture
 - `src/collectors/` — data collectors (brew, npm, docker, apps, xcode, dev-caches, node-modules, git-repos). Each exports a `collect*()` async function and data types.
+- `src/config.ts` — loads/saves user config from `~/.config/depwatch/config.json` (git scan paths + depth)
 - `src/linker.ts` — scans ~/projects to map packages → projects where they're used
-- `src/cleanup.ts` — cleanup actions (brew cleanup, npm cache clean, etc.) with size estimation
+- `src/cleanup.ts` — cleanup actions (brew cleanup, npm cache clean, etc.) with size estimation and per-action warnings
 - `src/cache.ts` — caches scan results to `~/.cache/depwatch/last-scan.json` for instant loading
 - `src/tui/` — TUI components using pi-tui's Component interface
 - `src/tui/app.ts` — main TUI host with sidebar + content pane, focus management
+- `src/tui/settings-view.ts` — settings view for configuring git scan paths and depth levels
 - `src/tui/spinner.ts` — braille spinner animation + elapsed time formatting
 - `src/__tests__/` — vitest tests with mocked fs/child_process
 - ESM project (`"type": "module"`) — use `import`, not `require`
@@ -36,10 +38,15 @@ macOS Dev Dependency Manager TUI — shows disk usage for dev tools and lets you
 - All collectors run via `Promise.all` with `settle()` helper for graceful degradation
 - Views with async operations use `onRequestRender?.()` callback to trigger re-renders
 - Deletion shows animated braille spinner with elapsed time via `setInterval`
-- `collectAll` reports progress via callback for dashboard progress bar
+- `collectAll` reports progress via callback for dashboard progress bar; accepts optional `DepwatchConfig`
 - Dashboard rows are selectable — Enter/→ navigates to the corresponding screen via `sidebar.selectTab()`
 - Keybinding convention: →/Enter opens detail/expand, ←/Esc goes back, Enter/Del triggers delete on items
 - Node modules: → expands packages, Enter triggers delete confirmation
 - Git repos track `nodeModulesSizeBytes` and `linkedDockerImages` (cross-referenced from docker collector)
-- Docker↔git linking: `index.ts` matches docker `linkedProjects` to git repo `name` after all collectors finish
+- Docker↔git linking: `index.ts` matches docker `linkedProjectPaths` (full path) and `linkedProjects` (basename) to git repos
+- Docker links images to projects via: (1) container bind mounts, (2) compose labels, (3) compose file image references
+- Pulled images (no compose labels) are linked by reading `docker-compose.yml` from known compose working dirs
+- Cache cleanups have a confirm step showing per-action `warning` before running
 - Context-aware footer bar: each view exposes `getFooterHint()` for key hints
+- Views with modal states (e.g. settings "adding" mode) expose `wantsEscape()` to prevent app-level escape from intercepting
+- Settings persist to `~/.config/depwatch/config.json`; changes trigger data refresh

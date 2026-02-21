@@ -12,8 +12,10 @@ import { DevCachesView } from "./dev-caches-view.js";
 import { NodeModulesView } from "./node-modules-view.js";
 import { GitReposView } from "./git-repos-view.js";
 import { CleanupView } from "./cleanup-view.js";
+import { SettingsView } from "./settings-view.js";
 import { formatBytes, renderProgressBar } from "../utils.js";
 import { spinnerFrame, formatElapsed } from "./spinner.js";
+import { loadConfig, saveConfig, type DepwatchConfig } from "../config.js";
 
 class ContentPane implements Component {
   activeView: Component | null = null;
@@ -51,14 +53,16 @@ export class DepwatchApp {
   private nodeModulesView = new NodeModulesView();
   private gitReposView = new GitReposView();
   private cleanupView = new CleanupView();
+  private settingsView = new SettingsView();
 
+  private config: DepwatchConfig = { gitScanPaths: [] };
   private data: CollectedData | null = null;
   private currentTab: SidebarTab = "dashboard";
   private focusOnContent = false;
   private progress: { done: number; total: number } | null = null;
 
   constructor(
-    private collectFn: (onProgress?: (done: number, total: number) => void) => Promise<CollectedData>,
+    private collectFn: (onProgress?: (done: number, total: number) => void, config?: DepwatchConfig) => Promise<CollectedData>,
     private loadCacheFn: () => Promise<CollectedData | null>,
   ) {
     this.tui = new TUI(new ProcessTerminal());
@@ -108,6 +112,12 @@ export class DepwatchApp {
     this.nodeModulesView.onBack = backFn;
     this.gitReposView.onBack = backFn;
     this.cleanupView.onBack = backFn;
+    this.settingsView.onBack = backFn;
+    this.settingsView.onSettingsChanged = async (config) => {
+      this.config = config;
+      await saveConfig(config);
+      this.refresh();
+    };
 
     // Wire refresh callbacks
     const refreshFn = () => this.refresh();
@@ -139,7 +149,11 @@ export class DepwatchApp {
         this.stop();
         return { consume: true };
       }
-      if (matchesKey(data, "q") && !this.focusOnContent) {
+      // Check if the active content view is in a text-input mode (e.g. settings path input)
+      const activeViewConsumesInput = this.focusOnContent
+        && (this.contentPane.activeView as any)?.consumesInput?.();
+
+      if (matchesKey(data, "q") && !activeViewConsumesInput) {
         this.stop();
         return { consume: true };
       }
@@ -151,6 +165,13 @@ export class DepwatchApp {
         return { consume: true };
       }
       if (matchesKey(data, "escape") && this.focusOnContent) {
+        // Let views with text-input modes handle escape first
+        if (activeViewConsumesInput) {
+          this.contentPane.handleInput(data);
+          this.updateFooter();
+          this.tui.requestRender();
+          return { consume: true };
+        }
         this.focusOnContent = false;
         this.updateFocusState();
         this.tui.requestRender();
@@ -206,6 +227,7 @@ export class DepwatchApp {
     this.cleanupView.focused = contentFocused;
     this.devCachesView.focused = contentFocused;
     this.gitReposView.focused = contentFocused;
+    this.settingsView.focused = contentFocused;
 
     this.updateFooter();
   }
@@ -236,8 +258,9 @@ export class DepwatchApp {
     if (this.focusOnContent) {
       const view = this.contentPane.activeView as any;
       const hint = view?.getFooterHint?.() ?? "";
-      const parts = hint ? [" ← back", hint] : [" ← back"];
-      left = chalk.dim(" " + parts.join("  "));
+      const parts = ["q quit", "← back"];
+      if (hint) parts.push(hint);
+      left = chalk.dim("  " + parts.join("  "));
     } else {
       left = chalk.dim("  q quit  r refresh  ↑↓ navigate  Enter/→ open");
     }
@@ -294,6 +317,9 @@ export class DepwatchApp {
       case "cache-cleanups":
         this.contentPane.activeView = this.cleanupView;
         break;
+      case "settings":
+        this.contentPane.activeView = this.settingsView;
+        break;
     }
   }
 
@@ -335,6 +361,10 @@ export class DepwatchApp {
     this.tui.addChild(this.root);
     this.tui.start();
 
+    // Load config
+    this.config = await loadConfig();
+    this.settingsView.setConfig(this.config);
+
     this.contentPane.activeView = this.dashboardView;
     this.updateSplitHeight();
     this.updateFocusState();
@@ -362,7 +392,7 @@ export class DepwatchApp {
         this.progress = { done, total };
         this.updateFooter();
         this.tui.requestRender();
-      });
+      }, this.config);
       this.populateViews();
     } catch {
       // Graceful degradation

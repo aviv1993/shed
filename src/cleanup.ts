@@ -10,6 +10,7 @@ export interface CleanupAction {
   command: string;
   args: string[];
   sizeBytes: number;
+  warning?: string;
 }
 
 export interface CleanupActionsData {
@@ -25,6 +26,7 @@ const CLEANUP_DEFS: Omit<CleanupAction, "sizeBytes">[] = [
     description: "Remove stale downloads and old versions (brew cleanup)",
     command: "brew",
     args: ["cleanup", "--prune=all", "-s"],
+    warning: "Next brew install may take longer to download packages",
   },
   {
     id: "brew-autoremove",
@@ -32,6 +34,7 @@ const CLEANUP_DEFS: Omit<CleanupAction, "sizeBytes">[] = [
     description: "Remove unused dependencies (brew autoremove)",
     command: "brew",
     args: ["autoremove"],
+    warning: "Removed packages will be reinstalled if still needed by other formulae",
   },
   {
     id: "npm-cache-clean",
@@ -39,6 +42,7 @@ const CLEANUP_DEFS: Omit<CleanupAction, "sizeBytes">[] = [
     description: "Clear the npm cache (~/.npm)",
     command: "npm",
     args: ["cache", "clean", "--force"],
+    warning: "Next npm install will re-download all packages",
   },
   {
     id: "pnpm-store-prune",
@@ -46,6 +50,7 @@ const CLEANUP_DEFS: Omit<CleanupAction, "sizeBytes">[] = [
     description: "Remove unreferenced packages from pnpm store",
     command: "pnpm",
     args: ["store", "prune"],
+    warning: "Removed packages will be re-downloaded when needed",
   },
   {
     id: "docker-prune",
@@ -53,6 +58,7 @@ const CLEANUP_DEFS: Omit<CleanupAction, "sizeBytes">[] = [
     description: "Remove unused containers, networks, and dangling images",
     command: "docker",
     args: ["system", "prune", "-f"],
+    warning: "Unused images will be re-pulled on next docker run",
   },
   {
     id: "docker-builder-prune",
@@ -60,6 +66,7 @@ const CLEANUP_DEFS: Omit<CleanupAction, "sizeBytes">[] = [
     description: "Remove build cache",
     command: "docker",
     args: ["builder", "prune", "-f"],
+    warning: "Next docker build will be slower (no layer cache)",
   },
   {
     id: "derived-data",
@@ -67,6 +74,7 @@ const CLEANUP_DEFS: Omit<CleanupAction, "sizeBytes">[] = [
     description: "Remove Xcode DerivedData (~/Library/Developer/Xcode/DerivedData)",
     command: "rm",
     args: ["-rf", join(home, "Library/Developer/Xcode/DerivedData")],
+    warning: "Next Xcode build will do a full rebuild",
   },
 ];
 

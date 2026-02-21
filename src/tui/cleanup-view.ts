@@ -7,6 +7,8 @@ import { formatBytes } from "../utils.js";
 export class CleanupView implements Component {
   private actions: CleanupAction[] = [];
   private selectedIndex = 0;
+  private confirming = false;
+  private confirmAction: CleanupAction | null = null;
   private running = false;
   private runningAction: CleanupAction | null = null;
   private runningStart = 0;
@@ -48,13 +50,28 @@ export class CleanupView implements Component {
       return;
     }
 
+    if (this.confirming && this.confirmAction) {
+      if (data === "y" || data === "Y") {
+        const action = this.confirmAction;
+        this.confirming = false;
+        this.confirmAction = null;
+        this.startAction(action);
+      } else {
+        this.confirming = false;
+        this.confirmAction = null;
+      }
+      return;
+    }
+
     if (matchesKey(data, "up") || matchesKey(data, "k")) {
       if (this.selectedIndex > 0) this.selectedIndex--;
     } else if (matchesKey(data, "down") || matchesKey(data, "j")) {
       if (this.selectedIndex < this.actions.length - 1) this.selectedIndex++;
     } else if (matchesKey(data, "enter")) {
       if (this.actions[this.selectedIndex]) {
-        this.startAction(this.actions[this.selectedIndex]);
+        const action = this.actions[this.selectedIndex];
+        this.confirming = true;
+        this.confirmAction = action;
       }
     } else if (matchesKey(data, "left")) {
       this.onBack?.();
@@ -107,6 +124,10 @@ export class CleanupView implements Component {
     if (this.actions.length === 0) {
       lines.push(pad + chalk.dim("Loading..."));
       return lines;
+    }
+
+    if (this.confirming && this.confirmAction) {
+      return this.renderConfirm(width, lines);
     }
 
     if (this.runningAction) {
@@ -182,6 +203,26 @@ export class CleanupView implements Component {
     return lines;
   }
 
+  private renderConfirm(width: number, lines: string[]): string[] {
+    const pad = "  ";
+    const action = this.confirmAction!;
+
+    lines.push(pad + chalk.bold.red("Run ") + chalk.bold(action.label) + chalk.bold.red("?"));
+    lines.push("");
+    lines.push(pad + chalk.dim(action.description));
+    if (action.sizeBytes > 0) {
+      lines.push(pad + chalk.dim("Estimated size: ") + chalk.yellow(formatBytes(action.sizeBytes)));
+    }
+    lines.push("");
+    if (action.warning) {
+      lines.push(pad + chalk.yellow("⚠ " + action.warning));
+      lines.push("");
+    }
+    lines.push(pad + chalk.white("Press ") + chalk.bold.red("y") + chalk.white(" to confirm, any other key to cancel"));
+
+    return lines;
+  }
+
   getOperationStatus(): { label: string; tick: number; startMs: number } | null {
     if (this.running && this.runningAction) {
       return { label: `Running ${this.runningAction.label}...`, tick: this.spinnerTick, startMs: this.runningStart };
@@ -192,6 +233,7 @@ export class CleanupView implements Component {
   getFooterHint(): string {
     if (this.running) return "↑↓ scroll output";
     if (this.runningAction && this.exitCode !== null) return "Enter continue";
+    if (this.confirming) return "y confirm  any key cancel";
     return "↑↓ navigate  Enter run";
   }
 }
