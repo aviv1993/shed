@@ -270,10 +270,20 @@ export class DevCachesView implements Component {
       ));
     }
 
-    lines.push("");
-    lines.push(pad + chalk.dim("↑/↓ navigate  Enter expand/collapse  Del/Bksp delete"));
-
     return lines;
+  }
+
+  getFooterHint(): string {
+    switch (this.state.mode) {
+      case "confirm": return "y confirm  any key cancel";
+      case "deleting": return "";
+      case "done": return "Enter continue";
+      default: {
+        const item = this.items[this.selectedIndex];
+        if (item?.type === "group") return "↑↓ navigate  Enter/→ expand  ← collapse";
+        return "↑↓ navigate  Enter/Del delete  ← collapse";
+      }
+    }
   }
 
   private renderConfirm(width: number, lines: string[]): string[] {

@@ -129,10 +129,11 @@ export class DashboardView implements Component {
       );
     }
 
-    lines.push("");
-    lines.push(pad + chalk.dim("Use ↑/↓ to navigate categories"));
-
     return lines;
+  }
+
+  getFooterHint(): string {
+    return "↑↓ navigate categories";
   }
 }
 

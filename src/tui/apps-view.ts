@@ -199,9 +199,15 @@ export class AppsView implements Component {
       ));
     }
 
-    lines.push("");
-    lines.push(pad + chalk.dim("↑/↓ navigate  Enter delete"));
-
     return lines;
+  }
+
+  getFooterHint(): string {
+    switch (this.state.mode) {
+      case "confirm": return "y confirm  any key cancel";
+      case "deleting": return "";
+      case "done": return "Enter continue";
+      default: return "↑↓ navigate  Enter delete";
+    }
   }
 }

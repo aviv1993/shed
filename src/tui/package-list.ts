@@ -282,9 +282,6 @@ export class PackageListView implements Component {
       lines.push(pad + chalk.dim(`${pos}–${Math.min(pos + maxVisible - 1, total)} of ${total}`));
     }
 
-    lines.push("");
-    lines.push(pad + chalk.dim("↑/↓ navigate  Enter detail  / filter  Esc clear"));
-
     return lines;
   }
 
@@ -393,5 +390,15 @@ export class PackageListView implements Component {
     lines.push(pad + chalk.dim("Press Enter to continue (data will refresh)"));
 
     return lines;
+  }
+
+  getFooterHint(): string {
+    switch (this.state.mode) {
+      case "detail": return "Enter/Del uninstall  Esc back";
+      case "confirm": return "y confirm  any key cancel";
+      case "uninstalling": return "";
+      case "done": return "Enter continue";
+      default: return this.filter ? "↑↓ navigate  Esc clear filter" : "↑↓ navigate  Enter detail  / filter";
+    }
   }
 }

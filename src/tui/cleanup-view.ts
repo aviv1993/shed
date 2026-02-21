@@ -120,8 +120,6 @@ export class CleanupView implements Component {
       lines.push("");
     }
 
-    lines.push(pad + chalk.dim("↑/↓ navigate  Enter to run"));
-
     return lines;
   }
 
@@ -163,5 +161,11 @@ export class CleanupView implements Component {
     }
 
     return lines;
+  }
+
+  getFooterHint(): string {
+    if (this.running) return "↑↓ scroll output";
+    if (this.runningAction && this.exitCode !== null) return "Enter continue";
+    return "↑↓ navigate  Enter run";
   }
 }

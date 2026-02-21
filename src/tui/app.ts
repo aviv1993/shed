@@ -152,6 +152,7 @@ export class DepwatchApp {
       } else {
         this.sidebar.handleInput(data);
       }
+      this.updateFooter();
       this.tui.requestRender();
       return { consume: true };
     });
@@ -198,13 +199,14 @@ export class DepwatchApp {
   }
 
   private updateFooter() {
-    const parts = [" q quit", "r refresh", "←→ switch pane", "↑↓ navigate"];
-    if (!this.focusOnContent) {
-      parts.push("Enter/→ open");
+    if (this.focusOnContent) {
+      const view = this.contentPane.activeView as any;
+      const hint = view?.getFooterHint?.() ?? "";
+      const parts = hint ? [" ← back", hint] : [" ← back"];
+      this.footer.setText(chalk.dim(" " + parts.join("  ")));
     } else {
-      parts.push("← back");
+      this.footer.setText(chalk.dim("  q quit  r refresh  ↑↓ navigate  Enter/→ open"));
     }
-    this.footer.setText(chalk.dim(" " + parts.join("  ")));
   }
 
   private updateContentView() {
