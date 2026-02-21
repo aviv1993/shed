@@ -1,3 +1,5 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { run, duSize } from "../utils.js";
 
 export interface BrewPackage {
@@ -19,7 +21,7 @@ export interface BrewData {
 export async function collectBrew(): Promise<BrewData> {
   const [jsonOutput, cacheSize] = await Promise.all([
     run("brew", ["info", "--json=v1", "--installed"], 60_000),
-    duSize("/Users/aviv/Library/Caches/Homebrew").catch(() => 0),
+    duSize(join(homedir(), "Library/Caches/Homebrew")).catch(() => 0),
   ]);
 
   if (!jsonOutput) {

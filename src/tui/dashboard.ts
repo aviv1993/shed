@@ -2,15 +2,22 @@ import type { Component } from "@mariozechner/pi-tui";
 import { visibleWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { CollectedData } from "../types.js";
-import { formatBytes } from "../utils.js";
+import { formatBytes, renderProgressBar } from "../utils.js";
 
 export class DashboardView implements Component {
   private data: CollectedData | null = null;
   private stale = false;
+  private progressDone: number | null = null;
+  private progressTotal: number | null = null;
 
   setData(data: CollectedData, stale = false) {
     this.data = data;
     this.stale = stale;
+  }
+
+  setProgress(done: number | null, total: number | null) {
+    this.progressDone = done;
+    this.progressTotal = total;
   }
 
   invalidate(): void {}
@@ -24,8 +31,15 @@ export class DashboardView implements Component {
     lines.push(pad + chalk.bold("Overview") + (this.stale ? chalk.dim.yellow("  (cached — refreshing...)") : ""));
     lines.push("");
 
+    if (this.progressDone !== null && this.progressTotal !== null) {
+      lines.push(pad + chalk.dim("Scanning... ") + chalk.cyan(renderProgressBar(this.progressDone, this.progressTotal, 20)));
+      lines.push("");
+    }
+
     if (!this.data) {
-      lines.push(pad + chalk.dim("Loading data..."));
+      if (this.progressDone === null) {
+        lines.push(pad + chalk.dim("Loading data..."));
+      }
       return lines;
     }
 
@@ -43,9 +57,9 @@ export class DashboardView implements Component {
       d.npmCache.totalBytes > 0 ? `${formatBytes(d.npmCache.totalBytes)} cache` : "—",
     ]);
     rows.push([
-      `node_modules (${d.nodeModules.entries.length})`,
-      formatBytes(d.nodeModules.totalBytes),
-      formatBytes(d.nodeModules.totalBytes) + " cleanable",
+      `node_modules (${d.nodeModules?.entries.length ?? 0})`,
+      formatBytes(d.nodeModules?.totalBytes ?? 0),
+      formatBytes(d.nodeModules?.totalBytes ?? 0) + " cleanable",
     ]);
     rows.push([
       "Docker",
@@ -58,12 +72,7 @@ export class DashboardView implements Component {
       "—",
     ]);
     rows.push([
-      "Xcode/CLT",
-      formatBytes(d.xcode.totalBytes),
-      "—",
-    ]);
-    rows.push([
-      `Dev Caches (${d.devCaches.entries.length})`,
+      `IDEs & Tools (${d.devCaches.groups?.length ?? 0})`,
       formatBytes(d.devCaches.totalBytes),
       formatBytes(d.devCaches.entries.filter(e => e.cleanable).reduce((s, e) => s + e.sizeBytes, 0)) + " cleanable",
     ]);
@@ -89,16 +98,15 @@ export class DashboardView implements Component {
     const totalDevBytes =
       d.brew.totalBytes +
       d.npmGlobals.totalBytes +
-      d.nodeModules.totalBytes +
+      (d.nodeModules?.totalBytes ?? 0) +
       (d.docker.online ? parseApproxSize(d.docker.totalSizeStr) : 0) +
       d.apps.totalBytes +
-      d.xcode.totalBytes +
       d.devCaches.totalBytes;
 
     const totalReclaimable =
       d.brew.cacheBytes +
       d.npmCache.totalBytes +
-      d.nodeModules.totalBytes +
+      (d.nodeModules?.totalBytes ?? 0) +
       (d.docker.online ? parseApproxSize(d.docker.reclaimableSizeStr) : 0) +
       d.devCaches.entries.filter(e => e.cleanable).reduce((s, e) => s + e.sizeBytes, 0);
 

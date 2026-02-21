@@ -4,6 +4,7 @@ import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { DockerData, DockerImage, DockerContainer, DockerVolume } from "../collectors/docker.js";
 import { formatBytes } from "../utils.js";
+import { spinnerFrame, formatElapsed } from "./spinner.js";
 
 interface FlatItem {
   type: "image" | "container" | "volume" | "header" | "build-cache";
@@ -29,8 +30,12 @@ export class DockerView implements Component {
   private selectedIndex = 0;
   private scrollOffset = 0;
   private state: ViewState = { mode: "list" };
+  private spinnerTick = 0;
+  private spinnerStart = 0;
+  private spinnerInterval: ReturnType<typeof setInterval> | null = null;
   focused = false;
   onRefreshData?: () => void;
+  onRequestRender?: () => void;
 
   setData(data: DockerData) {
     this.data = data;
@@ -166,8 +171,25 @@ export class DockerView implements Component {
     }
   }
 
+  private startSpinner() {
+    this.spinnerTick = 0;
+    this.spinnerStart = Date.now();
+    this.spinnerInterval = setInterval(() => {
+      this.spinnerTick++;
+      this.onRequestRender?.();
+    }, 100);
+  }
+
+  private stopSpinner() {
+    if (this.spinnerInterval) {
+      clearInterval(this.spinnerInterval);
+      this.spinnerInterval = null;
+    }
+  }
+
   private deleteItem(item: FlatItem) {
     this.state = { mode: "deleting", item };
+    this.startSpinner();
 
     let cmd: string;
     let args: string[];
@@ -182,6 +204,7 @@ export class DockerView implements Component {
       cmd = "docker";
       args = ["volume", "rm", item.volume.name];
     } else {
+      this.stopSpinner();
       return;
     }
 
@@ -192,10 +215,14 @@ export class DockerView implements Component {
     child.stdout?.on("data", (chunk: Buffer) => output.push(chunk.toString().trim()));
     child.stderr?.on("data", (chunk: Buffer) => output.push(chunk.toString().trim()));
     child.on("close", (code: number | null) => {
+      this.stopSpinner();
       this.state = { mode: "done", item, success: code === 0, output: output.join("\n") };
+      this.onRequestRender?.();
     });
     child.on("error", (err: Error) => {
+      this.stopSpinner();
       this.state = { mode: "done", item, success: false, output: err.message };
+      this.onRequestRender?.();
     });
   }
 
@@ -224,7 +251,7 @@ export class DockerView implements Component {
     }
     if (this.state.mode === "deleting") {
       const item = (this.state as { mode: "deleting"; item: FlatItem }).item;
-      lines.push(pad + chalk.yellow("Deleting " + item.label + "..."));
+      lines.push(pad + chalk.yellow(`Deleting ${item.label}... ${spinnerFrame(this.spinnerTick)} ${formatElapsed(this.spinnerStart)}`));
       return lines;
     }
     if (this.state.mode === "done") {

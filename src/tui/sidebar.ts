@@ -9,8 +9,8 @@ export type SidebarTab =
   | "node-modules"
   | "docker"
   | "apps"
-  | "xcode"
   | "ides"
+  | "git-repos"
   | "cache-cleanups";
 
 interface SidebarItem {
@@ -33,8 +33,8 @@ export class Sidebar implements Component {
       { tab: "node-modules", label: "node_modules" },
       { tab: "docker", label: "Docker" },
       { tab: "apps", label: "Apps" },
-      { tab: "xcode", label: "Xcode" },
       { tab: "ides", label: "IDEs" },
+      { tab: "git-repos", label: "Git Repos" },
       { tab: null, label: "──────────" },
       { tab: "cache-cleanups", label: "Cache Cleanups" },
     ];

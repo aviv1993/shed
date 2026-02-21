@@ -8,9 +8,9 @@ import { DashboardView } from "./dashboard.js";
 import { PackageListView } from "./package-list.js";
 import { DockerView } from "./docker-view.js";
 import { AppsView } from "./apps-view.js";
-import { XcodeView } from "./xcode-view.js";
 import { DevCachesView } from "./dev-caches-view.js";
 import { NodeModulesView } from "./node-modules-view.js";
+import { GitReposView } from "./git-repos-view.js";
 import { CleanupView } from "./cleanup-view.js";
 import { formatBytes } from "../utils.js";
 
@@ -46,17 +46,18 @@ export class DepwatchApp {
   private npmListView = new PackageListView();
   private dockerView = new DockerView();
   private appsView = new AppsView();
-  private xcodeView = new XcodeView();
   private devCachesView = new DevCachesView();
   private nodeModulesView = new NodeModulesView();
+  private gitReposView = new GitReposView();
   private cleanupView = new CleanupView();
 
   private data: CollectedData | null = null;
   private currentTab: SidebarTab = "dashboard";
   private focusOnContent = false;
+  private progress: { done: number; total: number } | null = null;
 
   constructor(
-    private collectFn: () => Promise<CollectedData>,
+    private collectFn: (onProgress?: (done: number, total: number) => void) => Promise<CollectedData>,
     private loadCacheFn: () => Promise<CollectedData | null>,
   ) {
     this.tui = new TUI(new ProcessTerminal());
@@ -87,11 +88,17 @@ export class DepwatchApp {
     const refreshFn = () => this.refresh();
     this.cleanupView.onRefreshData = refreshFn;
     this.appsView.onRefreshData = refreshFn;
+    this.appsView.onRequestRender = () => this.tui.requestRender();
     this.brewListView.onRefreshData = refreshFn;
     this.npmListView.onRefreshData = refreshFn;
     this.dockerView.onRefreshData = refreshFn;
+    this.dockerView.onRequestRender = () => this.tui.requestRender();
     this.devCachesView.onRefreshData = refreshFn;
+    this.devCachesView.onRequestRender = () => this.tui.requestRender();
     this.nodeModulesView.onRefreshData = refreshFn;
+    this.nodeModulesView.onRequestRender = () => this.tui.requestRender();
+    this.gitReposView.onRefreshData = refreshFn;
+    this.gitReposView.onRequestRender = () => this.tui.requestRender();
 
     // Keyboard handler
     this.tui.addInputListener((data) => {
@@ -167,6 +174,7 @@ export class DepwatchApp {
     this.dockerView.focused = contentFocused;
     this.cleanupView.focused = contentFocused;
     this.devCachesView.focused = contentFocused;
+    this.gitReposView.focused = contentFocused;
 
     this.updateFooter();
   }
@@ -177,9 +185,8 @@ export class DepwatchApp {
       const totalDevBytes =
         this.data.brew.totalBytes +
         this.data.npmGlobals.totalBytes +
-        this.data.nodeModules.totalBytes +
+        (this.data.nodeModules?.totalBytes ?? 0) +
         this.data.apps.totalBytes +
-        this.data.xcode.totalBytes +
         this.data.devCaches.totalBytes;
       const diskTotal = this.data.totalDiskBytes;
       if (diskTotal > 0) {
@@ -220,11 +227,11 @@ export class DepwatchApp {
       case "node-modules":
         this.contentPane.activeView = this.nodeModulesView;
         break;
-      case "xcode":
-        this.contentPane.activeView = this.xcodeView;
-        break;
       case "ides":
         this.contentPane.activeView = this.devCachesView;
+        break;
+      case "git-repos":
+        this.contentPane.activeView = this.gitReposView;
         break;
       case "cache-cleanups":
         this.contentPane.activeView = this.cleanupView;
@@ -239,18 +246,25 @@ export class DepwatchApp {
     this.brewListView.setBrewData(this.data.brew.packages, this.data.links);
     this.npmListView.setNpmData(this.data.npmGlobals.packages, this.data.links);
     this.dockerView.setData(this.data.docker);
-    this.nodeModulesView.setData(this.data.nodeModules);
+    if (this.data.nodeModules) {
+      this.nodeModulesView.setData(this.data.nodeModules);
+    }
     this.appsView.setData(this.data.apps);
-    this.xcodeView.setData(this.data.xcode);
     this.devCachesView.setData(this.data.devCaches);
-    this.cleanupView.setData(this.data.cleanupActions);
+    if (this.data.gitRepos) {
+      this.gitReposView.setData(this.data.gitRepos);
+    }
+    if (this.data.cleanupActions) {
+      this.cleanupView.setData(this.data.cleanupActions);
+    }
 
     this.sidebar.setCounts({
       brew: this.data.brew.packages.length,
       npm: this.data.npmGlobals.packages.length,
-      "node-modules": this.data.nodeModules.entries.length,
+      "node-modules": this.data.nodeModules?.entries.length ?? 0,
       apps: this.data.apps.apps.length,
       ides: this.data.devCaches.entries.length,
+      "git-repos": this.data.gitRepos?.repos.length ?? 0,
     });
 
     this.updateHeader();
@@ -258,6 +272,8 @@ export class DepwatchApp {
   }
 
   async start() {
+    // Enter alternate screen buffer so TUI doesn't pollute scrollback
+    process.stdout.write("\x1b[?1049h");
     this.tui.addChild(this.root);
     this.tui.start();
 
@@ -279,13 +295,23 @@ export class DepwatchApp {
   }
 
   private async loadData() {
+    this.progress = { done: 0, total: 10 };
+    this.dashboardView.setProgress(0, 10);
+    this.tui.requestRender();
+
     try {
-      this.data = await this.collectFn();
+      this.data = await this.collectFn((done, total) => {
+        this.progress = { done, total };
+        this.dashboardView.setProgress(done, total);
+        this.tui.requestRender();
+      });
       this.populateViews();
     } catch {
       // Graceful degradation
     }
 
+    this.progress = null;
+    this.dashboardView.setProgress(null, null);
     this.tui.requestRender();
   }
 
@@ -298,6 +324,8 @@ export class DepwatchApp {
 
   stop() {
     this.tui.stop();
+    // Leave alternate screen buffer — restores the terminal to pre-TUI state
+    process.stdout.write("\x1b[?1049l");
     process.exit(0);
   }
 }

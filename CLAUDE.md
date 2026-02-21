@@ -3,23 +3,28 @@
 macOS Dev Dependency Manager TUI — shows disk usage for dev tools and lets you clean them up.
 
 ## Tech Stack
-- TypeScript + Node.js, run with `tsx` (no build step)
+- TypeScript + Node.js
 - pnpm as package manager
 - `@mariozechner/pi-tui` for the interactive TUI
 - `chalk` for colors, `commander` for CLI parsing
+- `vitest` for testing
 
 ## Commands
-- `pnpm dev` — run the TUI
-- `npx tsc --noEmit` — typecheck
-- No test suite yet
+- `pnpm dev` — run the TUI (via tsx)
+- `pnpm build` — compile TypeScript to `dist/`
+- `pnpm test` — run tests
+- `pnpm test:watch` — run tests in watch mode
+- `pnpm typecheck` — check types (`tsc --noEmit`)
 
 ## Architecture
-- `src/collectors/` — data collectors (brew, npm, docker, apps, xcode, dev-caches, node-modules). Each exports a `collect*()` async function and data types.
+- `src/collectors/` — data collectors (brew, npm, docker, apps, xcode, dev-caches, node-modules, git-repos). Each exports a `collect*()` async function and data types.
 - `src/linker.ts` — scans ~/projects to map packages → projects where they're used
 - `src/cleanup.ts` — cleanup actions (brew cleanup, npm cache clean, etc.) with size estimation
 - `src/cache.ts` — caches scan results to `~/.cache/depwatch/last-scan.json` for instant loading
 - `src/tui/` — TUI components using pi-tui's Component interface
 - `src/tui/app.ts` — main TUI host with sidebar + content pane, focus management
+- `src/tui/spinner.ts` — braille spinner animation + elapsed time formatting
+- `src/__tests__/` — vitest tests with mocked fs/child_process
 - ESM project (`"type": "module"`) — use `import`, not `require`
 
 ## Key Patterns
@@ -29,3 +34,6 @@ macOS Dev Dependency Manager TUI — shows disk usage for dev tools and lets you
 - Views use `ViewState` discriminated union for state machines (list → confirm → deleting → done)
 - `focused` boolean on views controls whether selected item shows cyan or dim highlight
 - All collectors run via `Promise.all` with `settle()` helper for graceful degradation
+- Views with async operations use `onRequestRender?.()` callback to trigger re-renders
+- Deletion shows animated braille spinner with elapsed time via `setInterval`
+- `collectAll` reports progress via callback for dashboard progress bar

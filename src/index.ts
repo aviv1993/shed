@@ -5,9 +5,9 @@ import { collectNpmGlobals, type NpmGlobalsData } from "./collectors/npm-globals
 import { collectNpmCache, type NpmCacheData } from "./collectors/npm-cache.js";
 import { collectDocker, type DockerData } from "./collectors/docker.js";
 import { collectApps, type AppsData } from "./collectors/apps.js";
-import { collectXcode, type XcodeData } from "./collectors/xcode.js";
 import { collectDevCaches, type DevCachesData } from "./collectors/dev-caches.js";
 import { collectNodeModules, type NodeModulesData } from "./collectors/node-modules.js";
+import { collectGitRepos, type GitReposData } from "./collectors/git-repos.js";
 import { collectCleanupActions, type CleanupActionsData } from "./cleanup.js";
 import { buildLinkMap } from "./linker.js";
 import { getTotalDiskSize } from "./utils.js";
@@ -19,25 +19,35 @@ async function settle<T>(p: Promise<T>, fallback: T): Promise<T> {
   try { return await p; } catch { return fallback; }
 }
 
-async function collectAll(): Promise<CollectedData> {
+async function collectAll(onProgress?: (done: number, total: number) => void): Promise<CollectedData> {
   const defaultDocker: DockerData = {
     online: false, images: [], containers: [], volumes: [],
     buildCacheSizeStr: "—", buildCacheReclaimableStr: "—",
     totalSizeStr: "—", reclaimableSizeStr: "—",
   };
 
-  const [brewData, npmGlobalsData, npmCacheData, nodeModulesData, dockerData, appsData, xcodeData, devCachesData, cleanupActionsData, diskBytes] =
+  const total = 10;
+  let done = 0;
+  function track<T>(p: Promise<T>, fallback: T): Promise<T> {
+    return settle(p, fallback).then((v) => {
+      done++;
+      onProgress?.(done, total);
+      return v;
+    });
+  }
+
+  const [brewData, npmGlobalsData, npmCacheData, nodeModulesData, dockerData, appsData, devCachesData, gitReposData, cleanupActionsData, diskBytes] =
     await Promise.all([
-      settle(collectBrew(), { packages: [], cacheBytes: 0, totalBytes: 0 } as BrewData),
-      settle(collectNpmGlobals(), { packages: [], totalBytes: 0 } as NpmGlobalsData),
-      settle(collectNpmCache(), { npmCacheBytes: 0, pnpmStoreBytes: 0, totalBytes: 0 } as NpmCacheData),
-      settle(collectNodeModules(), { entries: [], totalBytes: 0 } as NodeModulesData),
-      settle(collectDocker(), defaultDocker),
-      settle(collectApps(), { apps: [], totalBytes: 0 } as AppsData),
-      settle(collectXcode(), { entries: [], totalBytes: 0 } as XcodeData),
-      settle(collectDevCaches(), { entries: [], totalBytes: 0 } as DevCachesData),
-      settle(collectCleanupActions(), { actions: [] } as CleanupActionsData),
-      settle(getTotalDiskSize(), 0),
+      track(collectBrew(), { packages: [], cacheBytes: 0, totalBytes: 0 } as BrewData),
+      track(collectNpmGlobals(), { packages: [], totalBytes: 0 } as NpmGlobalsData),
+      track(collectNpmCache(), { npmCacheBytes: 0, pnpmStoreBytes: 0, totalBytes: 0 } as NpmCacheData),
+      track(collectNodeModules(), { entries: [], totalBytes: 0 } as NodeModulesData),
+      track(collectDocker(), defaultDocker),
+      track(collectApps(), { apps: [], totalBytes: 0 } as AppsData),
+      track(collectDevCaches(), { entries: [], totalBytes: 0, groups: [] } as DevCachesData),
+      track(collectGitRepos(), { repos: [], totalBytes: 0, totalGitBytes: 0 } as GitReposData),
+      track(collectCleanupActions(), { actions: [] } as CleanupActionsData),
+      track(getTotalDiskSize(), 0),
     ]);
 
   // Build link map from all package names
@@ -54,8 +64,8 @@ async function collectAll(): Promise<CollectedData> {
     nodeModules: nodeModulesData,
     docker: dockerData,
     apps: appsData,
-    xcode: xcodeData,
     devCaches: devCachesData,
+    gitRepos: gitReposData,
     cleanupActions: cleanupActionsData,
     links,
     totalDiskBytes: diskBytes,

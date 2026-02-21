@@ -21,6 +21,14 @@ export function padLeft(str: string, len: number): string {
   return str.length >= len ? str : " ".repeat(len - str.length) + str;
 }
 
+export function renderProgressBar(done: number, total: number, width = 20): string {
+  if (total <= 0) return `[${"░".repeat(width)}] 0/0`;
+  const ratio = Math.min(done / total, 1);
+  const filled = Math.round(ratio * width);
+  const empty = width - filled;
+  return `[${"█".repeat(filled)}${"░".repeat(empty)}] ${done}/${total}`;
+}
+
 /** Run a command and return stdout. Returns empty string on failure. */
 export async function run(command: string, args: string[] = [], timeoutMs = 30_000): Promise<string> {
   try {

@@ -4,6 +4,7 @@ import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { AppsData, AppEntry } from "../collectors/apps.js";
 import { formatBytes } from "../utils.js";
+import { spinnerFrame, formatElapsed } from "./spinner.js";
 
 type ViewState =
   | { mode: "list" }
@@ -16,8 +17,12 @@ export class AppsView implements Component {
   private scrollOffset = 0;
   private selectedIndex = 0;
   private state: ViewState = { mode: "list" };
+  private spinnerTick = 0;
+  private spinnerStart = 0;
+  private spinnerInterval: ReturnType<typeof setInterval> | null = null;
   focused = false;
   onRefreshData?: () => void;
+  onRequestRender?: () => void;
 
   setData(data: AppsData) {
     this.data = data;
@@ -65,17 +70,38 @@ export class AppsView implements Component {
     }
   }
 
+  private startSpinner() {
+    this.spinnerTick = 0;
+    this.spinnerStart = Date.now();
+    this.spinnerInterval = setInterval(() => {
+      this.spinnerTick++;
+      this.onRequestRender?.();
+    }, 100);
+  }
+
+  private stopSpinner() {
+    if (this.spinnerInterval) {
+      clearInterval(this.spinnerInterval);
+      this.spinnerInterval = null;
+    }
+  }
+
   private deleteApp(app: AppEntry) {
     this.state = { mode: "deleting", app };
+    this.startSpinner();
 
     const child = spawn("rm", ["-rf", `/Applications/${app.name}`], {
       stdio: ["ignore", "pipe", "pipe"],
     });
     child.on("close", (code: number | null) => {
+      this.stopSpinner();
       this.state = { mode: "done", app, success: code === 0 };
+      this.onRequestRender?.();
     });
     child.on("error", () => {
+      this.stopSpinner();
       this.state = { mode: "done", app, success: false };
+      this.onRequestRender?.();
     });
   }
 
@@ -105,7 +131,8 @@ export class AppsView implements Component {
     }
 
     if (this.state.mode === "deleting") {
-      lines.push(pad + chalk.yellow("Deleting " + (this.state as any).app.name + "..."));
+      const app = (this.state as { mode: "deleting"; app: AppEntry }).app;
+      lines.push(pad + chalk.yellow(`Deleting ${app.name}... ${spinnerFrame(this.spinnerTick)} ${formatElapsed(this.spinnerStart)}`));
       return lines;
     }
 

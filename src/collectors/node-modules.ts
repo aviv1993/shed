@@ -1,12 +1,19 @@
-import { readdir, stat } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join, basename } from "node:path";
+import { join } from "node:path";
 import { duSize } from "../utils.js";
+
+export interface NodeModulePackage {
+  name: string;
+  version: string;
+  sizeBytes: number;
+}
 
 export interface NodeModulesEntry {
   projectName: string;
   path: string;
   sizeBytes: number;
+  packages: NodeModulePackage[];
 }
 
 export interface NodeModulesData {
@@ -74,14 +81,15 @@ async function findNodeModules(
     try {
       const size = await duSize(nmPath);
       if (size > 0) {
+        // Don't scan packages here — done lazily on expand
         results.push({
           projectName,
           path: nmPath,
           sizeBytes: size,
+          packages: [],
         });
       }
     } catch {}
-    // Don't recurse into this node_modules, but do check sibling dirs
   }
 
   const promises: Promise<void>[] = [];
@@ -103,4 +111,65 @@ async function findNodeModules(
   }
 
   await Promise.all(promises);
+}
+
+/** Scan packages inside a node_modules directory. Called lazily on expand. */
+export async function scanNodeModulesPackages(nmPath: string): Promise<NodeModulePackage[]> {
+  let entries: string[];
+  try {
+    entries = await readdir(nmPath);
+  } catch {
+    return [];
+  }
+
+  const packages: NodeModulePackage[] = [];
+  const promises: Promise<void>[] = [];
+
+  for (const entry of entries) {
+    if (entry.startsWith(".")) continue;
+
+    if (entry.startsWith("@")) {
+      promises.push(
+        (async () => {
+          const scopeDir = join(nmPath, entry);
+          try {
+            const subEntries = await readdir(scopeDir);
+            await Promise.all(
+              subEntries.map(async (sub) => {
+                const pkg = await readPkgInfo(join(scopeDir, sub), `${entry}/${sub}`);
+                if (pkg) packages.push(pkg);
+              })
+            );
+          } catch {}
+        })()
+      );
+    } else {
+      promises.push(
+        (async () => {
+          const pkg = await readPkgInfo(join(nmPath, entry), entry);
+          if (pkg) packages.push(pkg);
+        })()
+      );
+    }
+  }
+
+  await Promise.all(promises);
+  packages.sort((a, b) => b.sizeBytes - a.sizeBytes);
+  return packages;
+}
+
+async function readPkgInfo(dir: string, name: string): Promise<NodeModulePackage | null> {
+  try {
+    const s = await stat(dir);
+    if (!s.isDirectory()) return null;
+    const [pkgJson, size] = await Promise.all([
+      readFile(join(dir, "package.json"), "utf-8").catch(() => "{}"),
+      duSize(dir),
+    ]);
+    if (size === 0) return null;
+    const parsed = JSON.parse(pkgJson);
+    return { name, version: parsed.version ?? "?", sizeBytes: size };
+  } catch {
+    return null;
+  }
 }
