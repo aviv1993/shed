@@ -274,16 +274,11 @@ export class PackageListView implements Component {
 
     const projectLinks = this.links.get(item.name);
     if (projectLinks && projectLinks.length > 0) {
-      lines.push("");
-      lines.push(pad + chalk.dim("Used in projects:"));
-      for (const link of projectLinks) {
-        lines.push(pad + "  " + chalk.green(link.projectName));
-        for (const file of link.files.slice(0, 5)) {
-          lines.push(pad + "    " + chalk.dim(file));
-        }
-      }
+      lines.push(
+        pad + chalk.dim("Projects: ") +
+        chalk.green(projectLinks.map((l) => l.projectName).join(", "))
+      );
     } else {
-      lines.push("");
       lines.push(pad + chalk.dim("No project links found"));
     }
 
