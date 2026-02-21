@@ -133,9 +133,9 @@ export async function collectDocker(): Promise<DockerData> {
     for (const line of lines) {
       if (line.startsWith("Build Cache")) {
         const parts = line.split(/\s{2,}/).filter(Boolean);
-        if (parts.length >= 4) {
-          buildCacheSizeStr = parts[2] ?? "—";
-          buildCacheReclaimableStr = parts[3] ?? "—";
+        if (parts.length >= 5) {
+          buildCacheSizeStr = parts[3] ?? "—";
+          buildCacheReclaimableStr = parts[4] ?? "—";
         }
       }
     }
@@ -146,9 +146,9 @@ export async function collectDocker(): Promise<DockerData> {
     let reclaimableBytes = 0;
     for (const tl of typeLines) {
       const parts = tl.split(/\s{2,}/).filter(Boolean);
-      if (parts.length >= 4) {
-        totalBytes += parseSize(parts[2]);
-        reclaimableBytes += parseSize(parts[3]);
+      if (parts.length >= 5) {
+        totalBytes += parseSize(parts[3]);
+        reclaimableBytes += parseSize(parts[4]);
       }
     }
     if (totalBytes > 0) {

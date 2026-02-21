@@ -72,14 +72,13 @@ describe("collectDocker", () => {
   });
 
   it("parses docker system df output for build cache", async () => {
-    // docker system df -v output format: after split by 2+ spaces,
-    // the code takes parts[2] as size and parts[3] as reclaimable
+    // docker system df output: TYPE  TOTAL  ACTIVE  SIZE  RECLAIMABLE
     const dfOutput = [
-      "TYPE            TOTAL     SIZE      RECLAIMABLE",
-      "Images          5         1.5GB     500MB",
-      "Containers      3         100MB     50MB",
-      "Local Volumes   2         200MB     100MB",
-      "Build Cache     10        800MB     800MB",
+      "TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE",
+      "Images          5         2         1.5GB     500MB",
+      "Containers      3         1         100MB     50MB",
+      "Local Volumes   2         1         200MB     100MB",
+      "Build Cache     10        0         800MB     800MB",
     ].join("\n");
 
     mockRun.mockImplementation(async (_cmd, args) => {
