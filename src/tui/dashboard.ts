@@ -6,7 +6,7 @@ import type { SidebarTab } from "./sidebar.js";
 import { formatBytes } from "../utils.js";
 
 const ROW_TABS: SidebarTab[] = [
-  "brew", "npm", "node-modules", "docker", "apps", "ides",
+  "brew", "npm", "node-modules", "git-repos", "docker", "apps", "ides",
 ];
 
 export class DashboardView implements Component {
@@ -54,6 +54,20 @@ export class DashboardView implements Component {
 
     const d = this.data;
 
+    // Git repos size excluding node_modules (already counted separately)
+    const gitRepoBytes = (d.gitRepos?.totalBytes ?? 0) - (d.gitRepos?.totalNodeModulesBytes ?? 0);
+
+    // Docker: compute image size total as fallback when totalSizeStr is "—"
+    const dockerImageBytes = d.docker.images.reduce((s, i) => s + i.sizeBytes, 0);
+    const dockerTotal = d.docker.online
+      ? (d.docker.totalSizeStr !== "—" ? d.docker.totalSizeStr : formatBytes(dockerImageBytes))
+      : chalk.dim("offline");
+    const dockerReclaimable = d.docker.online
+      ? (d.docker.reclaimableSizeStr !== "—" ? d.docker.reclaimableSizeStr : "—")
+      : "—";
+
+    const dockerCount = d.docker.images.length + d.docker.containers.length + d.docker.volumes.length;
+
     const rows: [string, string, string][] = [];
     rows.push([
       `Homebrew (${d.brew.packages.length})`,
@@ -71,9 +85,14 @@ export class DashboardView implements Component {
       formatBytes(d.nodeModules?.totalBytes ?? 0) + " cleanable",
     ]);
     rows.push([
-      "Docker",
-      d.docker.online ? d.docker.totalSizeStr : chalk.dim("offline"),
-      d.docker.online ? d.docker.reclaimableSizeStr : "—",
+      `Git Repos (${d.gitRepos?.repos.length ?? 0})`,
+      formatBytes(gitRepoBytes),
+      formatBytes(d.gitRepos?.totalGitBytes ?? 0) + " .git",
+    ]);
+    rows.push([
+      `Docker (${dockerCount})`,
+      dockerTotal,
+      dockerReclaimable,
     ]);
     rows.push([
       `Apps (${d.apps.apps.length})`,
@@ -86,7 +105,7 @@ export class DashboardView implements Component {
       formatBytes(d.devCaches.entries.filter(e => e.cleanable).reduce((s, e) => s + e.sizeBytes, 0)) + " cleanable",
     ]);
 
-    const col1W = 24;
+    const col1W = 26;
     const col2W = 12;
     const col3W = 18;
 
@@ -114,11 +133,16 @@ export class DashboardView implements Component {
       );
     }
 
+    const dockerSizeBytes = d.docker.online
+      ? (d.docker.totalSizeStr !== "—" ? parseApproxSize(d.docker.totalSizeStr) : dockerImageBytes)
+      : 0;
+
     const totalDevBytes =
       d.brew.totalBytes +
       d.npmGlobals.totalBytes +
       (d.nodeModules?.totalBytes ?? 0) +
-      (d.docker.online ? parseApproxSize(d.docker.totalSizeStr) : 0) +
+      gitRepoBytes +
+      dockerSizeBytes +
       d.apps.totalBytes +
       d.devCaches.totalBytes;
 

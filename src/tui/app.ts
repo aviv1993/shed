@@ -235,10 +235,14 @@ export class DepwatchApp {
   private updateHeader() {
     let title = chalk.bold.cyan(" depwatch");
     if (this.data) {
+      const gitRepoBytes = (this.data.gitRepos?.totalBytes ?? 0) - (this.data.gitRepos?.totalNodeModulesBytes ?? 0);
+      const dockerImageBytes = this.data.docker.images.reduce((s, i) => s + i.sizeBytes, 0);
       const totalDevBytes =
         this.data.brew.totalBytes +
         this.data.npmGlobals.totalBytes +
         (this.data.nodeModules?.totalBytes ?? 0) +
+        gitRepoBytes +
+        (this.data.docker.online ? dockerImageBytes : 0) +
         this.data.apps.totalBytes +
         this.data.devCaches.totalBytes;
       const diskTotal = this.data.totalDiskBytes;
@@ -346,6 +350,7 @@ export class DepwatchApp {
       brew: this.data.brew.packages.length,
       npm: this.data.npmGlobals.packages.length,
       "node-modules": this.data.nodeModules?.entries.length ?? 0,
+      docker: this.data.docker.images.length + this.data.docker.containers.length + this.data.docker.volumes.length,
       apps: this.data.apps.apps.length,
       ides: this.data.devCaches.entries.length,
       "git-repos": this.data.gitRepos?.repos.length ?? 0,
