@@ -2,25 +2,25 @@ import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import { homedir } from "node:os";
-import type { DepwatchConfig } from "../config.js";
+import type { ShedConfig } from "../config.js";
 
 type ViewState = "list" | "adding";
 
 export class SettingsView implements Component {
-  private config: DepwatchConfig = { gitScanPaths: [] };
+  private config: ShedConfig = { gitScanPaths: [] };
   private selectedIndex = 0;
   private state: ViewState = "list";
   private inputBuffer = "";
   focused = false;
   onBack?: () => void;
-  onSettingsChanged?: (config: DepwatchConfig) => void;
+  onSettingsChanged?: (config: ShedConfig) => void;
 
-  setConfig(config: DepwatchConfig) {
+  setConfig(config: ShedConfig) {
     this.config = config;
     this.selectedIndex = Math.min(this.selectedIndex, Math.max(this.config.gitScanPaths.length - 1, 0));
   }
 
-  getConfig(): DepwatchConfig {
+  getConfig(): ShedConfig {
     return this.config;
   }
 

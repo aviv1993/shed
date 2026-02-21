@@ -12,15 +12,15 @@ import { collectCleanupActions, type CleanupActionsData } from "./cleanup.js";
 import { buildLinkMap } from "./linker.js";
 import { getTotalDiskSize } from "./utils.js";
 import type { CollectedData } from "./types.js";
-import { DepwatchApp } from "./tui/app.js";
+import { ShedApp } from "./tui/app.js";
 import { loadCachedData, saveCachedData } from "./cache.js";
-import type { DepwatchConfig } from "./config.js";
+import type { ShedConfig } from "./config.js";
 
 async function settle<T>(p: Promise<T>, fallback: T): Promise<T> {
   try { return await p; } catch { return fallback; }
 }
 
-async function collectAll(onProgress?: (done: number, total: number) => void, config?: DepwatchConfig): Promise<CollectedData> {
+async function collectAll(onProgress?: (done: number, total: number) => void, config?: ShedConfig): Promise<CollectedData> {
   const defaultDocker: DockerData = {
     online: false, images: [], containers: [], volumes: [],
     buildCacheSizeStr: "—", buildCacheReclaimableStr: "—",
@@ -118,11 +118,11 @@ async function collectAll(onProgress?: (done: number, total: number) => void, co
 }
 
 program
-  .name("depwatch")
-  .description("macOS Dev Dependency Manager TUI")
+  .name("shed")
+  .description("macOS Dev Disk Usage TUI")
   .version("0.1.0")
   .action(async () => {
-    const app = new DepwatchApp(collectAll, loadCachedData);
+    const app = new ShedApp(collectAll, loadCachedData);
     await app.start();
   });
 

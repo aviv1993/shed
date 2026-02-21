@@ -15,7 +15,7 @@ import { CleanupView } from "./cleanup-view.js";
 import { SettingsView } from "./settings-view.js";
 import { formatBytes, renderProgressBar } from "../utils.js";
 import { spinnerFrame, formatElapsed } from "./spinner.js";
-import { loadConfig, saveConfig, type DepwatchConfig } from "../config.js";
+import { loadConfig, saveConfig, type ShedConfig } from "../config.js";
 
 class ContentPane implements Component {
   activeView: Component | null = null;
@@ -34,7 +34,7 @@ class ContentPane implements Component {
   }
 }
 
-export class DepwatchApp {
+export class ShedApp {
   private tui: TUI;
   private root: Container;
   private header: Text;
@@ -55,14 +55,14 @@ export class DepwatchApp {
   private cleanupView = new CleanupView();
   private settingsView = new SettingsView();
 
-  private config: DepwatchConfig = { gitScanPaths: [] };
+  private config: ShedConfig = { gitScanPaths: [] };
   private data: CollectedData | null = null;
   private currentTab: SidebarTab = "dashboard";
   private focusOnContent = false;
   private progress: { done: number; total: number } | null = null;
 
   constructor(
-    private collectFn: (onProgress?: (done: number, total: number) => void, config?: DepwatchConfig) => Promise<CollectedData>,
+    private collectFn: (onProgress?: (done: number, total: number) => void, config?: ShedConfig) => Promise<CollectedData>,
     private loadCacheFn: () => Promise<CollectedData | null>,
   ) {
     this.tui = new TUI(new ProcessTerminal());
@@ -233,7 +233,7 @@ export class DepwatchApp {
   }
 
   private updateHeader() {
-    let title = chalk.bold.cyan(" depwatch");
+    let title = chalk.bold.cyan(" shed") + " " + chalk.red("👹");
     if (this.data) {
       const gitRepoBytes = (this.data.gitRepos?.totalBytes ?? 0) - (this.data.gitRepos?.totalNodeModulesBytes ?? 0);
       const dockerImageBytes = this.data.docker.images.reduce((s, i) => s + i.sizeBytes, 0);

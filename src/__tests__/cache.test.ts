@@ -49,7 +49,7 @@ describe("saveCachedData", () => {
 
     await saveCachedData({ foo: 1, links: new Map([["x", "y"]]) });
 
-    expect(mockMkdir).toHaveBeenCalledWith(expect.stringContaining("depwatch"), { recursive: true });
+    expect(mockMkdir).toHaveBeenCalledWith(expect.stringContaining("shed"), { recursive: true });
     expect(mockWriteFile).toHaveBeenCalledOnce();
     const written = JSON.parse(mockWriteFile.mock.calls[0][1] as string);
     expect(written.foo).toBe(1);

@@ -1,10 +1,10 @@
 {
-  "name": "depwatch",
+  "name": "shed",
   "version": "0.1.0",
   "description": "macOS Dev Dependency Manager TUI",
   "type": "module",
   "bin": {
-    "depwatch": "./dist/index.js"
+    "shed": "./dist/index.js"
   },
   "files": ["dist"],
   "scripts": {

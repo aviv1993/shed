@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { homedir } from "node:os";
 
-const CACHE_DIR = join(homedir(), ".cache", "depwatch");
+const CACHE_DIR = join(homedir(), ".cache", "shed");
 const CACHE_FILE = join(CACHE_DIR, "last-scan.json");
 const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
 

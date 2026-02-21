@@ -1,8 +1,10 @@
-# depwatch
+# shed 👹
 
 In an era where a single developer can maintain dozens of repos, spin up containers on a whim, and accumulate toolchains across multiple languages, disk storage silently disappears. Homebrew caches, scattered `node_modules`, Docker images, IDE extensions, and forgotten git clones pile up until you're staring at a "disk full" warning with no idea where the space went.
 
-**depwatch** gives you a single, interactive terminal view of everything dev-related eating your disk — and lets you clean it up on the spot.
+**shed** gives you a single, interactive terminal view of everything dev-related eating your disk — and lets you clean it up on the spot.
+
+> *shed* — as in "shed the weight". Also שד (demon) in Hebrew, because your disk usage is haunted.
 
 > **macOS only.** Collectors rely on macOS-specific paths and tools (Homebrew, `/Applications`, Xcode, etc.).
 
@@ -23,14 +25,14 @@ Everything is interactive: navigate with arrows, expand with Enter/→, and dele
 ## Install
 
 ```bash
-npm install -g depwatch
+npm install -g shed
 ```
 
 Or for local development:
 
 ```bash
 git clone <repo-url>
-cd depwatch
+cd shed
 pnpm install
 pnpm build && npm link
 ```
@@ -59,7 +61,7 @@ pnpm build          # compile to dist/
 
 ## Configuration
 
-depwatch stores settings in `~/.config/depwatch/config.json`. You can configure:
+shed stores settings in `~/.config/shed/config.json`. You can configure:
 
 - **Git scan paths** — directories to scan for git repos, each with a configurable depth level (1–5)
 
