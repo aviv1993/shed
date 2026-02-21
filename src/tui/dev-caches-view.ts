@@ -111,6 +111,8 @@ export class DevCachesView implements Component {
           this.expandedGroups.add(tool);
         }
         this.buildItemList();
+      } else if (item?.type === "entry" && item.entry) {
+        this.state = { mode: "confirm", entry: item.entry };
       }
     } else if (matchesKey(data, "left")) {
       const item = this.items[this.selectedIndex];
