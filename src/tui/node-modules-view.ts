@@ -292,6 +292,14 @@ export class NodeModulesView implements Component {
     return lines;
   }
 
+  getOperationStatus(): { label: string; tick: number; startMs: number } | null {
+    if (this.state.mode === "deleting") {
+      const entry = (this.state as { mode: "deleting"; entry: NodeModulesEntry }).entry;
+      return { label: `Deleting ${entry.projectName}...`, tick: this.spinnerTick, startMs: this.spinnerStart };
+    }
+    return null;
+  }
+
   getFooterHint(): string {
     switch (this.state.mode) {
       case "confirm": return "y confirm  any key cancel";

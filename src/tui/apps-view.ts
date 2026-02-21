@@ -205,6 +205,14 @@ export class AppsView implements Component {
     return lines;
   }
 
+  getOperationStatus(): { label: string; tick: number; startMs: number } | null {
+    if (this.state.mode === "deleting") {
+      const app = (this.state as any).app;
+      return { label: `Deleting ${app.name}...`, tick: this.spinnerTick, startMs: this.spinnerStart };
+    }
+    return null;
+  }
+
   getFooterHint(): string {
     switch (this.state.mode) {
       case "confirm": return "y confirm  any key cancel";

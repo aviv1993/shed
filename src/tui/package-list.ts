@@ -6,6 +6,7 @@ import type { BrewPackage } from "../collectors/brew.js";
 import type { NpmGlobalPackage } from "../collectors/npm-globals.js";
 import type { LinkMap } from "../types.js";
 import { formatBytes } from "../utils.js";
+import { spinnerFrame, formatElapsed } from "./spinner.js";
 
 interface PackageItem {
   name: string;
@@ -30,8 +31,12 @@ export class PackageListView implements Component {
   private links: LinkMap = new Map();
   private mode: "brew" | "npm" = "brew";
   private state: ViewState = { mode: "list" };
+  private spinnerTick = 0;
+  private spinnerStart = 0;
+  private spinnerInterval: ReturnType<typeof setInterval> | null = null;
   focused = false;
   onRefreshData?: () => void;
+  onRequestRender?: () => void;
   onBack?: () => void;
 
   setBrewData(packages: BrewPackage[], links: LinkMap) {
@@ -103,8 +108,25 @@ export class PackageListView implements Component {
     }
   }
 
+  private startSpinner() {
+    this.spinnerTick = 0;
+    this.spinnerStart = Date.now();
+    this.spinnerInterval = setInterval(() => {
+      this.spinnerTick++;
+      this.onRequestRender?.();
+    }, 100);
+  }
+
+  private stopSpinner() {
+    if (this.spinnerInterval) {
+      clearInterval(this.spinnerInterval);
+      this.spinnerInterval = null;
+    }
+  }
+
   private uninstallPackage(item: PackageItem) {
     this.state = { mode: "uninstalling", item, output: [] };
+    this.startSpinner();
 
     const cmd = this.mode === "brew" ? "brew" : "npm";
     const args = this.mode === "brew"
@@ -120,10 +142,14 @@ export class PackageListView implements Component {
     child.stdout?.on("data", (chunk: Buffer) => output.push(chunk.toString().trim()));
     child.stderr?.on("data", (chunk: Buffer) => output.push(chunk.toString().trim()));
     child.on("close", (code: number | null) => {
+      this.stopSpinner();
       this.state = { mode: "done", item, success: code === 0 };
+      this.onRequestRender?.();
     });
     child.on("error", () => {
+      this.stopSpinner();
       this.state = { mode: "done", item, success: false };
+      this.onRequestRender?.();
     });
   }
 
@@ -335,6 +361,14 @@ export class PackageListView implements Component {
     lines.push(pad + chalk.dim("Press Enter to continue (data will refresh)"));
 
     return lines;
+  }
+
+  getOperationStatus(): { label: string; tick: number; startMs: number } | null {
+    if (this.state.mode === "uninstalling") {
+      const item = (this.state as { mode: "uninstalling"; item: PackageItem }).item;
+      return { label: `Uninstalling ${item.name}...`, tick: this.spinnerTick, startMs: this.spinnerStart };
+    }
+    return null;
   }
 
   getFooterHint(): string {

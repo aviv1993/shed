@@ -13,6 +13,7 @@ import { NodeModulesView } from "./node-modules-view.js";
 import { GitReposView } from "./git-repos-view.js";
 import { CleanupView } from "./cleanup-view.js";
 import { formatBytes } from "../utils.js";
+import { spinnerFrame, formatElapsed } from "./spinner.js";
 
 class ContentPane implements Component {
   activeView: Component | null = null;
@@ -110,19 +111,23 @@ export class DepwatchApp {
 
     // Wire refresh callbacks
     const refreshFn = () => this.refresh();
+    const renderFn = () => { this.updateFooter(); this.tui.requestRender(); };
     this.cleanupView.onRefreshData = refreshFn;
+    this.cleanupView.onRequestRender = renderFn;
     this.appsView.onRefreshData = refreshFn;
-    this.appsView.onRequestRender = () => this.tui.requestRender();
+    this.appsView.onRequestRender = renderFn;
     this.brewListView.onRefreshData = refreshFn;
+    this.brewListView.onRequestRender = renderFn;
     this.npmListView.onRefreshData = refreshFn;
+    this.npmListView.onRequestRender = renderFn;
     this.dockerView.onRefreshData = refreshFn;
-    this.dockerView.onRequestRender = () => this.tui.requestRender();
+    this.dockerView.onRequestRender = renderFn;
     this.devCachesView.onRefreshData = refreshFn;
-    this.devCachesView.onRequestRender = () => this.tui.requestRender();
+    this.devCachesView.onRequestRender = renderFn;
     this.nodeModulesView.onRefreshData = refreshFn;
-    this.nodeModulesView.onRequestRender = () => this.tui.requestRender();
+    this.nodeModulesView.onRequestRender = renderFn;
     this.gitReposView.onRefreshData = refreshFn;
-    this.gitReposView.onRequestRender = () => this.tui.requestRender();
+    this.gitReposView.onRequestRender = renderFn;
 
     // Keyboard handler
     this.tui.addInputListener((data) => {
@@ -224,14 +229,37 @@ export class DepwatchApp {
   }
 
   private updateFooter() {
+    // Check all views for active operations
+    const op = this.getActiveOperation();
+
+    let left: string;
     if (this.focusOnContent) {
       const view = this.contentPane.activeView as any;
       const hint = view?.getFooterHint?.() ?? "";
       const parts = hint ? [" ← back", hint] : [" ← back"];
-      this.footer.setText(chalk.dim(" " + parts.join("  ")));
+      left = chalk.dim(" " + parts.join("  "));
     } else {
-      this.footer.setText(chalk.dim("  q quit  r refresh  ↑↓ navigate  Enter/→ open"));
+      left = chalk.dim("  q quit  r refresh  ↑↓ navigate  Enter/→ open");
     }
+
+    if (op) {
+      this.footer.setText(left + "    " + chalk.yellow(`${op.label} ${spinnerFrame(op.tick)} ${formatElapsed(op.startMs)}`));
+    } else {
+      this.footer.setText(left);
+    }
+  }
+
+  private getActiveOperation(): { label: string; tick: number; startMs: number } | null {
+    const views = [
+      this.brewListView, this.npmListView, this.dockerView,
+      this.appsView, this.devCachesView, this.nodeModulesView,
+      this.gitReposView, this.cleanupView,
+    ] as any[];
+    for (const view of views) {
+      const status = view.getOperationStatus?.();
+      if (status) return status;
+    }
+    return null;
   }
 
   private updateContentView() {

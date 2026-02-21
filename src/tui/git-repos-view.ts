@@ -280,6 +280,18 @@ export class GitReposView implements Component {
     return lines;
   }
 
+  getOperationStatus(): { label: string; tick: number; startMs: number } | null {
+    if (this.state.mode === "deleting") {
+      const repo = (this.state as { mode: "deleting"; repo: GitRepoEntry }).repo;
+      return { label: `Deleting ${repo.name}...`, tick: this.spinnerTick, startMs: this.spinnerStart };
+    }
+    if (this.state.mode === "checking") {
+      const repo = (this.state as { mode: "checking"; repo: GitRepoEntry }).repo;
+      return { label: `Checking ${repo.name}...`, tick: this.spinnerTick, startMs: this.spinnerStart };
+    }
+    return null;
+  }
+
   getFooterHint(): string {
     switch (this.state.mode) {
       case "checking": return "";

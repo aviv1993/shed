@@ -9,12 +9,16 @@ export class CleanupView implements Component {
   private selectedIndex = 0;
   private running = false;
   private runningAction: CleanupAction | null = null;
+  private runningStart = 0;
   private output: string[] = [];
   private outputScrollOffset = 0;
   private exitCode: number | null = null;
   private killFn: (() => void) | null = null;
+  private spinnerTick = 0;
+  private spinnerInterval: ReturnType<typeof setInterval> | null = null;
   focused = false;
   onRefreshData?: () => void;
+  onRequestRender?: () => void;
   onBack?: () => void;
 
   setData(data: CleanupActionsData) {
@@ -60,9 +64,15 @@ export class CleanupView implements Component {
   private startAction(action: CleanupAction) {
     this.runningAction = action;
     this.running = true;
+    this.runningStart = Date.now();
     this.output = [];
     this.exitCode = null;
     this.outputScrollOffset = 0;
+    this.spinnerTick = 0;
+    this.spinnerInterval = setInterval(() => {
+      this.spinnerTick++;
+      this.onRequestRender?.();
+    }, 100);
 
     this.killFn = runCleanupAction(
       action,
@@ -70,11 +80,17 @@ export class CleanupView implements Component {
         const newLines = text.split("\n");
         this.output.push(...newLines.filter((l) => l.length > 0));
         this.outputScrollOffset = Math.max(0, this.output.length - 15);
+        this.onRequestRender?.();
       },
       (code) => {
         this.running = false;
         this.exitCode = code;
         this.killFn = null;
+        if (this.spinnerInterval) {
+          clearInterval(this.spinnerInterval);
+          this.spinnerInterval = null;
+        }
+        this.onRequestRender?.();
       }
     );
   }
@@ -164,6 +180,13 @@ export class CleanupView implements Component {
     }
 
     return lines;
+  }
+
+  getOperationStatus(): { label: string; tick: number; startMs: number } | null {
+    if (this.running && this.runningAction) {
+      return { label: `Running ${this.runningAction.label}...`, tick: this.spinnerTick, startMs: this.runningStart };
+    }
+    return null;
   }
 
   getFooterHint(): string {

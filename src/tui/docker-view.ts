@@ -349,6 +349,14 @@ export class DockerView implements Component {
     return lines;
   }
 
+  getOperationStatus(): { label: string; tick: number; startMs: number } | null {
+    if (this.state.mode === "deleting") {
+      const item = (this.state as { mode: "deleting"; item: FlatItem }).item;
+      return { label: `Deleting ${item.label}...`, tick: this.spinnerTick, startMs: this.spinnerStart };
+    }
+    return null;
+  }
+
   getFooterHint(): string {
     switch (this.state.mode) {
       case "confirm": return "y confirm  any key cancel";

@@ -276,6 +276,14 @@ export class DevCachesView implements Component {
     return lines;
   }
 
+  getOperationStatus(): { label: string; tick: number; startMs: number } | null {
+    if (this.state.mode === "deleting") {
+      const entry = (this.state as { mode: "deleting"; entry: DevCacheEntry }).entry;
+      return { label: `Deleting ${entry.label}...`, tick: this.spinnerTick, startMs: this.spinnerStart };
+    }
+    return null;
+  }
+
   getFooterHint(): string {
     switch (this.state.mode) {
       case "confirm": return "y confirm  any key cancel";
