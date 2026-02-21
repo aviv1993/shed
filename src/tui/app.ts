@@ -12,7 +12,7 @@ import { DevCachesView } from "./dev-caches-view.js";
 import { NodeModulesView } from "./node-modules-view.js";
 import { GitReposView } from "./git-repos-view.js";
 import { CleanupView } from "./cleanup-view.js";
-import { formatBytes } from "../utils.js";
+import { formatBytes, renderProgressBar } from "../utils.js";
 import { spinnerFrame, formatElapsed } from "./spinner.js";
 
 class ContentPane implements Component {
@@ -242,11 +242,14 @@ export class DepwatchApp {
       left = chalk.dim("  q quit  r refresh  ↑↓ navigate  Enter/→ open");
     }
 
+    let right = "";
     if (op) {
-      this.footer.setText(left + "    " + chalk.yellow(`${op.label} ${spinnerFrame(op.tick)} ${formatElapsed(op.startMs)}`));
-    } else {
-      this.footer.setText(left);
+      right = chalk.yellow(`${op.label} ${spinnerFrame(op.tick)} ${formatElapsed(op.startMs)}`);
+    } else if (this.progress) {
+      right = chalk.cyan(`Scanning... ${renderProgressBar(this.progress.done, this.progress.total, 15)}`);
     }
+
+    this.footer.setText(right ? left + "    " + right : left);
   }
 
   private getActiveOperation(): { label: string; tick: number; startMs: number } | null {
@@ -351,13 +354,13 @@ export class DepwatchApp {
 
   private async loadData() {
     this.progress = { done: 0, total: 11 };
-    this.dashboardView.setProgress(0, 11);
+    this.updateFooter();
     this.tui.requestRender();
 
     try {
       this.data = await this.collectFn((done, total) => {
         this.progress = { done, total };
-        this.dashboardView.setProgress(done, total);
+        this.updateFooter();
         this.tui.requestRender();
       });
       this.populateViews();
@@ -366,7 +369,7 @@ export class DepwatchApp {
     }
 
     this.progress = null;
-    this.dashboardView.setProgress(null, null);
+    this.updateFooter();
     this.tui.requestRender();
   }
 

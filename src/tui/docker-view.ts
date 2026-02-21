@@ -98,9 +98,12 @@ export class DockerView implements Component {
       sizeStr: "", extra: "", selectable: false,
     });
     for (const v of d.volumes) {
+      const volProjStr = v.linkedContainers.length > 0
+        ? " → " + v.linkedContainers.join(", ")
+        : "";
       items.push({
         type: "volume", label: v.name, sizeStr: v.sizeStr,
-        extra: "", selectable: true, volume: v,
+        extra: volProjStr, selectable: true, volume: v,
       });
     }
     if (d.volumes.length === 0) {

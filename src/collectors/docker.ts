@@ -151,8 +151,8 @@ export async function collectDocker(): Promise<DockerData> {
     }
   }
 
-  // Link containers to projects via inspect
-  await linkDockerProjects(containers, images);
+  // Link containers/images/volumes to projects via inspect + labels
+  await linkDockerProjects(containers, images, volumes);
 
   return {
     online: true,
@@ -173,7 +173,8 @@ function formatDockerSize(bytes: number): string {
   return `${(bytes / 1024 ** 3).toFixed(1)}GB`;
 }
 
-async function linkDockerProjects(containers: DockerContainer[], images: DockerImage[]) {
+async function linkDockerProjects(containers: DockerContainer[], images: DockerImage[], volumes: DockerVolume[]) {
+  // Link containers via inspect (bind mounts + compose labels)
   for (const container of containers) {
     const inspectJson = await run("docker", ["inspect", container.name]);
     if (!inspectJson) continue;
@@ -214,5 +215,44 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
         }
       }
     } catch {}
+  }
+
+  // Link images via their own labels (compose project info baked into image)
+  for (const img of images) {
+    if (img.linkedProjects.length > 0) continue;
+    try {
+      const inspectJson = await run("docker", ["image", "inspect", img.id]);
+      if (!inspectJson) continue;
+      const info = JSON.parse(inspectJson);
+      const labels = info[0]?.Config?.Labels ?? {};
+      const composeProject = labels["com.docker.compose.project"];
+      const workDir = labels["com.docker.compose.project.working_dir"];
+      if (workDir) {
+        const m = workDir.match(/^\/Users\/[^/]+\/([^/]+)/);
+        if (m && !img.linkedProjects.includes(m[1])) {
+          img.linkedProjects.push(m[1]);
+        }
+      } else if (composeProject && !img.linkedProjects.includes(composeProject)) {
+        img.linkedProjects.push(composeProject);
+      }
+    } catch {}
+  }
+
+  // Infer project links from volume names (e.g. "findash_db_data" → "findash")
+  const knownProjects = new Set<string>();
+  for (const c of containers) {
+    for (const p of c.linkedProjects) knownProjects.add(p);
+  }
+  for (const img of images) {
+    for (const p of img.linkedProjects) knownProjects.add(p);
+  }
+  for (const vol of volumes) {
+    for (const proj of knownProjects) {
+      if (vol.name.startsWith(proj + "_") || vol.name.startsWith(proj + "-")) {
+        if (!vol.linkedContainers.includes(proj)) {
+          vol.linkedContainers.push(proj);
+        }
+      }
+    }
   }
 }

@@ -3,7 +3,7 @@ import { matchesKey, visibleWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
 import type { CollectedData } from "../types.js";
 import type { SidebarTab } from "./sidebar.js";
-import { formatBytes, renderProgressBar } from "../utils.js";
+import { formatBytes } from "../utils.js";
 
 const ROW_TABS: SidebarTab[] = [
   "brew", "npm", "node-modules", "docker", "apps", "ides",
@@ -12,8 +12,6 @@ const ROW_TABS: SidebarTab[] = [
 export class DashboardView implements Component {
   private data: CollectedData | null = null;
   private stale = false;
-  private progressDone: number | null = null;
-  private progressTotal: number | null = null;
   private selectedIndex = 0;
   focused = false;
   onNavigate?: (tab: SidebarTab) => void;
@@ -22,11 +20,6 @@ export class DashboardView implements Component {
   setData(data: CollectedData, stale = false) {
     this.data = data;
     this.stale = stale;
-  }
-
-  setProgress(done: number | null, total: number | null) {
-    this.progressDone = done;
-    this.progressTotal = total;
   }
 
   invalidate(): void {}
@@ -54,15 +47,8 @@ export class DashboardView implements Component {
     lines.push(pad + chalk.bold("Overview") + (this.stale ? chalk.dim.yellow("  (cached — refreshing...)") : ""));
     lines.push("");
 
-    if (this.progressDone !== null && this.progressTotal !== null) {
-      lines.push(pad + chalk.dim("Scanning... ") + chalk.cyan(renderProgressBar(this.progressDone, this.progressTotal, 20)));
-      lines.push("");
-    }
-
     if (!this.data) {
-      if (this.progressDone === null) {
-        lines.push(pad + chalk.dim("Loading data..."));
-      }
+      lines.push(pad + chalk.dim("Loading data..."));
       return lines;
     }
 
