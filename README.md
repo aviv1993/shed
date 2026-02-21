@@ -4,6 +4,8 @@ In an era where a single developer can maintain dozens of repos, spin up contain
 
 **depwatch** gives you a single, interactive terminal view of everything dev-related eating your disk — and lets you clean it up on the spot.
 
+> **macOS only.** Collectors rely on macOS-specific paths and tools (Homebrew, `/Applications`, Xcode, etc.).
+
 ## What it shows
 
 - **Homebrew** — every formula with size, dependency status, and which of your projects use it
@@ -51,6 +53,5 @@ pnpm build          # compile to dist/
 | `←/→` or `Tab` | Switch between sidebar and content |
 | `Enter` or `→` | Expand/collapse groups, open details |
 | `Del` or `Backspace` | Delete selected item (with confirmation) |
-| `/` | Filter (in package lists) |
 | `r` | Refresh all data |
 | `q` or `Ctrl+C` | Quit |
