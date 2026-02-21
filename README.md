@@ -1,6 +1,6 @@
 # shed 👹
 
-*Your disk is haunted by dev tools. Exorcise them.*
+*Your disk storage is haunted by dev tools. Exorcise them.*
 
 **shed** is an interactive terminal tool that finds everything dev-related eating your disk — Homebrew, npm, Docker, node_modules, IDEs, git repos — and lets you clean it up on the spot.
 
