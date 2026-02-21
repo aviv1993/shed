@@ -4,10 +4,6 @@
 
 **shed** is an interactive terminal tool that finds everything dev-related eating your disk — Homebrew, npm, Docker, node_modules, IDEs, git repos — and lets you clean it up on the spot.
 
-> *shed* — as in "shed the weight". Also שד (demon) in Hebrew.
-
-> **macOS only.** Collectors rely on macOS-specific paths and tools (Homebrew, `/Applications`, Xcode, etc.).
-
 ![Dashboard](screenshots/dashboard.png)
 
 ## What it shows
