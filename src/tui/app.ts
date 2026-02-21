@@ -233,7 +233,7 @@ export class ShedApp {
   }
 
   private updateHeader() {
-    let title = chalk.bold.cyan(" shed") + " " + chalk.red("👹");
+    let title = "";
     if (this.data) {
       const gitRepoBytes = (this.data.gitRepos?.totalBytes ?? 0) - (this.data.gitRepos?.totalNodeModulesBytes ?? 0);
       const dockerImageBytes = this.data.docker.images.reduce((s, i) => s + i.sizeBytes, 0);
@@ -248,7 +248,7 @@ export class ShedApp {
       const diskTotal = this.data.totalDiskBytes;
       if (diskTotal > 0) {
         const pct = ((totalDevBytes / diskTotal) * 100).toFixed(1);
-        title += chalk.dim(`   Total: ${formatBytes(totalDevBytes)} / ${formatBytes(diskTotal)} (${pct}%)`);
+        title = chalk.dim(` Total: ${formatBytes(totalDevBytes)} / ${formatBytes(diskTotal)} (${pct}%)`);
       }
     }
     this.header.setText(title);

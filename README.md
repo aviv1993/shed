@@ -4,6 +4,12 @@ In an era where a single developer can maintain dozens of repos, spin up contain
 
 **shed** gives you a single, interactive terminal view of everything dev-related eating your disk — and lets you clean it up on the spot.
 
+> *shed* — as in "shed the weight". Also שד (demon) in Hebrew, because your disk usage is haunted.
+
+> **macOS only.** Collectors rely on macOS-specific paths and tools (Homebrew, `/Applications`, Xcode, etc.).
+
+![Dashboard](screenshots/dashboard.png)
+
 ## What it shows
 
 - **Homebrew** — every formula with size, dependency status, and which of your projects use it
@@ -18,6 +24,11 @@ In an era where a single developer can maintain dozens of repos, spin up contain
 
 Everything is interactive: navigate with arrows, expand with Enter/→, and delete with confirmation. Cleanup actions show a warning about the impact (e.g., "Next build will be slower") before running.
 
+| | |
+|---|---|
+| ![IDEs & Tools](screenshots/ides.png) | ![Docker](screenshots/docker.png) |
+| ![Cache Cleanups](screenshots/cleanups.png) | |
+
 ## Install
 
 ```bash
@@ -27,7 +38,7 @@ npm install -g shed
 Or for local development:
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/aviv1993/shed.git
 cd shed
 pnpm install
 pnpm build && npm link

@@ -93,6 +93,8 @@ export class Sidebar implements Component {
   render(width: number): string[] {
     const lines: string[] = [];
     lines.push(""); // top padding
+    lines.push("  " + chalk.bold.cyan("shed") + " " + chalk.red("👹"));
+    lines.push("");
 
     for (let i = 0; i < this.items.length; i++) {
       const item = this.items[i];
