@@ -1,0 +1,31 @@
+# depwatch
+
+macOS Dev Dependency Manager TUI — shows disk usage for dev tools and lets you clean them up.
+
+## Tech Stack
+- TypeScript + Node.js, run with `tsx` (no build step)
+- pnpm as package manager
+- `@mariozechner/pi-tui` for the interactive TUI
+- `chalk` for colors, `commander` for CLI parsing
+
+## Commands
+- `pnpm dev` — run the TUI
+- `npx tsc --noEmit` — typecheck
+- No test suite yet
+
+## Architecture
+- `src/collectors/` — data collectors (brew, npm, docker, apps, xcode, dev-caches, node-modules). Each exports a `collect*()` async function and data types.
+- `src/linker.ts` — scans ~/projects to map packages → projects where they're used
+- `src/cleanup.ts` — cleanup actions (brew cleanup, npm cache clean, etc.) with size estimation
+- `src/cache.ts` — caches scan results to `~/.cache/depwatch/last-scan.json` for instant loading
+- `src/tui/` — TUI components using pi-tui's Component interface
+- `src/tui/app.ts` — main TUI host with sidebar + content pane, focus management
+- ESM project (`"type": "module"`) — use `import`, not `require`
+
+## Key Patterns
+- pi-tui Component interface: `render(width): string[]`, `handleInput(data)`, `invalidate()`
+- Container only stacks vertically — `horizontal-split.ts` is a custom side-by-side layout
+- Kitty keyboard protocol: `addInputListener` receives raw key events including releases — must filter with `isKeyRelease()`
+- Views use `ViewState` discriminated union for state machines (list → confirm → deleting → done)
+- `focused` boolean on views controls whether selected item shows cyan or dim highlight
+- All collectors run via `Promise.all` with `settle()` helper for graceful degradation

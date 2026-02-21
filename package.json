@@ -1,0 +1,23 @@
+{
+  "name": "depwatch",
+  "version": "0.1.0",
+  "description": "macOS Dev Dependency Manager TUI",
+  "type": "module",
+  "bin": {
+    "depwatch": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@mariozechner/pi-tui": "0.54.0",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}
