@@ -1,10 +1,10 @@
 # shed 👹
 
-In an era where a single developer can maintain dozens of repos, spin up containers on a whim, and accumulate toolchains across multiple languages, disk storage silently disappears. Homebrew caches, scattered `node_modules`, Docker images, IDE extensions, and forgotten git clones pile up until you're staring at a "disk full" warning with no idea where the space went.
+*Your disk is haunted by dev tools. Exorcise them.*
 
-**shed** gives you a single, interactive terminal view of everything dev-related eating your disk — and lets you clean it up on the spot.
+**shed** is an interactive terminal tool that finds everything dev-related eating your disk — Homebrew, npm, Docker, node_modules, IDEs, git repos — and lets you clean it up on the spot.
 
-> *shed* — as in "shed the weight". Also שד (demon) in Hebrew, because your disk usage is haunted.
+> *shed* — as in "shed the weight". Also שד (demon) in Hebrew.
 
 > **macOS only.** Collectors rely on macOS-specific paths and tools (Homebrew, `/Applications`, Xcode, etc.).
 
