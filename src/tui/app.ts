@@ -92,6 +92,22 @@ export class DepwatchApp {
       this.tui.requestRender();
     };
 
+    // Wire back-to-sidebar callback
+    const backFn = () => {
+      this.focusOnContent = false;
+      this.updateFocusState();
+      this.tui.requestRender();
+    };
+    this.dashboardView.onBack = backFn;
+    this.brewListView.onBack = backFn;
+    this.npmListView.onBack = backFn;
+    this.dockerView.onBack = backFn;
+    this.appsView.onBack = backFn;
+    this.devCachesView.onBack = backFn;
+    this.nodeModulesView.onBack = backFn;
+    this.gitReposView.onBack = backFn;
+    this.cleanupView.onBack = backFn;
+
     // Wire refresh callbacks
     const refreshFn = () => this.refresh();
     this.cleanupView.onRefreshData = refreshFn;
@@ -129,7 +145,7 @@ export class DepwatchApp {
         this.tui.requestRender();
         return { consume: true };
       }
-      if (matchesKey(data, "left") && this.focusOnContent) {
+      if (matchesKey(data, "escape") && this.focusOnContent) {
         this.focusOnContent = false;
         this.updateFocusState();
         this.tui.requestRender();

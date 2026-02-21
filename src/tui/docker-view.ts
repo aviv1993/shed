@@ -36,6 +36,7 @@ export class DockerView implements Component {
   focused = false;
   onRefreshData?: () => void;
   onRequestRender?: () => void;
+  onBack?: () => void;
 
   setData(data: DockerData) {
     this.data = data;
@@ -153,6 +154,8 @@ export class DockerView implements Component {
           if (item?.selectable) {
             this.state = { mode: "confirm", item };
           }
+        } else if (matchesKey(data, "left")) {
+          this.onBack?.();
         }
         break;
       case "confirm":

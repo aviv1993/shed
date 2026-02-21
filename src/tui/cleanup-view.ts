@@ -15,6 +15,7 @@ export class CleanupView implements Component {
   private killFn: (() => void) | null = null;
   focused = false;
   onRefreshData?: () => void;
+  onBack?: () => void;
 
   setData(data: CleanupActionsData) {
     this.actions = data.actions;
@@ -51,6 +52,8 @@ export class CleanupView implements Component {
       if (this.actions[this.selectedIndex]) {
         this.startAction(this.actions[this.selectedIndex]);
       }
+    } else if (matchesKey(data, "left")) {
+      this.onBack?.();
     }
   }
 

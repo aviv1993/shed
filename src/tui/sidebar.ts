@@ -109,7 +109,7 @@ export class Sidebar implements Component {
       if (isSelected && this.focused) {
         lines.push(chalk.cyan("▸ ") + chalk.bold.cyan(label));
       } else if (isSelected) {
-        lines.push(chalk.dim("▸ ") + chalk.white(label));
+        lines.push("  " + chalk.white(label));
       } else {
         lines.push("  " + chalk.dim(label));
       }

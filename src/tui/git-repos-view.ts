@@ -27,6 +27,7 @@ export class GitReposView implements Component {
   focused = false;
   onRefreshData?: () => void;
   onRequestRender?: () => void;
+  onBack?: () => void;
 
   setData(data: GitReposData) {
     this.data = data;
@@ -55,6 +56,8 @@ export class GitReposView implements Component {
           if (repo) {
             this.checkAndConfirm(repo);
           }
+        } else if (matchesKey(data, "left")) {
+          this.onBack?.();
         }
         break;
       case "confirm":

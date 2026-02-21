@@ -34,6 +34,7 @@ export class NodeModulesView implements Component {
   focused = false;
   onRefreshData?: () => void;
   onRequestRender?: () => void;
+  onBack?: () => void;
 
   setData(data: NodeModulesData) {
     this.data = data;
@@ -121,6 +122,8 @@ export class NodeModulesView implements Component {
           if (item?.type === "project" && item.entry && this.expandedProjects.has(item.entry.path)) {
             this.expandedProjects.delete(item.entry.path);
             this.buildItemList();
+          } else {
+            this.onBack?.();
           }
         }
         break;

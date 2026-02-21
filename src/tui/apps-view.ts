@@ -23,6 +23,7 @@ export class AppsView implements Component {
   focused = false;
   onRefreshData?: () => void;
   onRequestRender?: () => void;
+  onBack?: () => void;
 
   setData(data: AppsData) {
     this.data = data;
@@ -51,6 +52,8 @@ export class AppsView implements Component {
           if (app) {
             this.state = { mode: "confirm", app };
           }
+        } else if (matchesKey(data, "left")) {
+          this.onBack?.();
         }
         break;
       case "confirm": {

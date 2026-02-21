@@ -32,6 +32,7 @@ export class PackageListView implements Component {
   private state: ViewState = { mode: "list" };
   focused = false;
   onRefreshData?: () => void;
+  onBack?: () => void;
 
   setBrewData(packages: BrewPackage[], links: LinkMap) {
     this.mode = "brew";
@@ -86,7 +87,7 @@ export class PackageListView implements Component {
   }
 
   private handleDetailInput(data: string) {
-    if (matchesKey(data, "escape") || matchesKey(data, "q")) {
+    if (matchesKey(data, "escape") || matchesKey(data, "q") || matchesKey(data, "left")) {
       this.state = { mode: "list" };
     } else if (matchesKey(data, "enter") || matchesKey(data, "delete") || matchesKey(data, "backspace")) {
       const item = (this.state as { mode: "detail"; item: PackageItem }).item;
@@ -141,6 +142,8 @@ export class PackageListView implements Component {
       if (this.items[this.selectedIndex]) {
         this.state = { mode: "detail", item: this.items[this.selectedIndex] };
       }
+    } else if (matchesKey(data, "left")) {
+      this.onBack?.();
     }
   }
 

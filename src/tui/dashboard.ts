@@ -17,6 +17,7 @@ export class DashboardView implements Component {
   private selectedIndex = 0;
   focused = false;
   onNavigate?: (tab: SidebarTab) => void;
+  onBack?: () => void;
 
   setData(data: CollectedData, stale = false) {
     this.data = data;
@@ -39,6 +40,8 @@ export class DashboardView implements Component {
       if (this.selectedIndex < ROW_TABS.length - 1) this.selectedIndex++;
     } else if (matchesKey(data, "enter") || matchesKey(data, "right")) {
       this.onNavigate?.(ROW_TABS[this.selectedIndex]);
+    } else if (matchesKey(data, "left")) {
+      this.onBack?.();
     }
   }
 

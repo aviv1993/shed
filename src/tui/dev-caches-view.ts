@@ -32,6 +32,7 @@ export class DevCachesView implements Component {
   focused = false;
   onRefreshData?: () => void;
   onRequestRender?: () => void;
+  onBack?: () => void;
 
   setData(data: DevCachesData) {
     this.data = data;
@@ -119,6 +120,8 @@ export class DevCachesView implements Component {
       if (item?.type === "group" && item.group && this.expandedGroups.has(item.group.tool)) {
         this.expandedGroups.delete(item.group.tool);
         this.buildItemList();
+      } else {
+        this.onBack?.();
       }
     } else if (matchesKey(data, "delete") || matchesKey(data, "backspace")) {
       const item = this.items[this.selectedIndex];
