@@ -4,10 +4,6 @@ In an era where a single developer can maintain dozens of repos, spin up contain
 
 **shed** gives you a single, interactive terminal view of everything dev-related eating your disk — and lets you clean it up on the spot.
 
-> *shed* — as in "shed the weight". Also שד (demon) in Hebrew, because your disk usage is haunted.
-
-> **macOS only.** Collectors rely on macOS-specific paths and tools (Homebrew, `/Applications`, Xcode, etc.).
-
 ## What it shows
 
 - **Homebrew** — every formula with size, dependency status, and which of your projects use it
