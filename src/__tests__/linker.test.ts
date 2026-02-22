@@ -7,7 +7,7 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 import { readdir, readFile, stat } from "node:fs/promises";
-import { buildLinkMap } from "../linker.js";
+import { buildLinkMap } from "../darwin/linker.js";
 
 const mockReaddir = vi.mocked(readdir);
 const mockReadFile = vi.mocked(readFile);

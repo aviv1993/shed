@@ -4,13 +4,13 @@ vi.mock("node:fs/promises", () => ({
   readdir: vi.fn(),
 }));
 
-vi.mock("../../utils.js", () => ({
+vi.mock("../../darwin/utils.js", () => ({
   duSize: vi.fn(),
 }));
 
 import { readdir } from "node:fs/promises";
-import { duSize } from "../../utils.js";
-import { collectApps } from "../../collectors/apps.js";
+import { duSize } from "../../darwin/utils.js";
+import { collectApps } from "../../darwin/collectors/apps.js";
 
 const mockReaddir = vi.mocked(readdir);
 const mockDuSize = vi.mocked(duSize);

@@ -1,7 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, basename } from "node:path";
-import type { ProjectLink, LinkMap } from "./types.js";
+import type { ProjectLink, LinkMap } from "../types.js";
 
 const SKIP_DIRS = new Set([
   "Library", "Desktop", "Downloads", "Documents", "Pictures", "Music",
@@ -121,7 +121,7 @@ async function scanProjectFiles(
             // Limit content size to avoid memory issues
             fileMap.set(relPath, content.slice(0, 50_000));
           })
-          .catch(() => {})
+          .catch(() => { })
       );
     }
 
@@ -134,7 +134,7 @@ async function scanProjectFiles(
               await scanProjectFiles(basePath, projectName, relPath, fileMap, depth + 1);
             }
           })
-          .catch(() => {})
+          .catch(() => { })
       );
     }
   }

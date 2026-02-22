@@ -29,7 +29,7 @@ export class Sidebar implements Component {
   constructor() {
     this.items = [
       { tab: "dashboard", label: "Dashboard" },
-      { tab: "brew", label: "Brew" },
+      { tab: "brew", label: process.platform === "win32" ? "Winget" : "Brew" },
       { tab: "npm", label: "npm globals" },
       { tab: "node-modules", label: "node_modules" },
       { tab: "docker", label: "Docker" },
@@ -62,7 +62,7 @@ export class Sidebar implements Component {
     }
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (matchesKey(data, "up") || matchesKey(data, "k")) {

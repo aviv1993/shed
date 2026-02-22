@@ -1,43 +1,8 @@
 import { stat, readFile } from "node:fs/promises";
 import { join, basename } from "node:path";
 import { run } from "../utils.js";
+import type { DockerImage, DockerContainer, DockerVolume, DockerData } from "../../types.js";
 
-export interface DockerImage {
-  repository: string;
-  tag: string;
-  id: string;
-  sizeBytes: number;
-  sizeStr: string;
-  linkedProjects: string[];
-  linkedProjectPaths: string[];
-}
-
-export interface DockerContainer {
-  name: string;
-  image: string;
-  state: string;
-  sizeStr: string;
-  linkedProjects: string[];
-  linkedProjectPaths: string[];
-}
-
-export interface DockerVolume {
-  name: string;
-  driver: string;
-  sizeStr: string;
-  linkedContainers: string[];
-}
-
-export interface DockerData {
-  online: boolean;
-  images: DockerImage[];
-  containers: DockerContainer[];
-  volumes: DockerVolume[];
-  buildCacheSizeStr: string;
-  buildCacheReclaimableStr: string;
-  totalSizeStr: string;
-  reclaimableSizeStr: string;
-}
 
 function parseSize(sizeStr: string): number {
   const match = sizeStr.match(/([\d.]+)\s*(B|KB|MB|GB|TB|kB)/i);
@@ -88,7 +53,7 @@ export async function collectDocker(): Promise<DockerData> {
         linkedProjects: [],
         linkedProjectPaths: [],
       });
-    } catch {}
+    } catch { }
   }
   images.sort((a, b) => b.sizeBytes - a.sizeBytes);
 
@@ -105,7 +70,7 @@ export async function collectDocker(): Promise<DockerData> {
         linkedProjects: [],
         linkedProjectPaths: [],
       });
-    } catch {}
+    } catch { }
   }
 
   // Parse volumes
@@ -119,7 +84,7 @@ export async function collectDocker(): Promise<DockerData> {
         sizeStr: "—",
         linkedContainers: [],
       });
-    } catch {}
+    } catch { }
   }
 
   // Parse docker system df -v for build cache info
@@ -190,7 +155,7 @@ async function readComposeImages(workDir: string): Promise<string[]> {
         if (match) images.push(match[1]);
       }
       if (images.length > 0) return images;
-    } catch {}
+    } catch { }
   }
   return [];
 }
@@ -267,7 +232,7 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
           }
         }
       }
-    } catch {}
+    } catch { }
   }
 
   // Link images via their own labels (compose project info baked into image)
@@ -293,7 +258,7 @@ async function linkDockerProjects(containers: DockerContainer[], images: DockerI
       } else if (composeProject && !img.linkedProjects.includes(composeProject)) {
         img.linkedProjects.push(composeProject);
       }
-    } catch {}
+    } catch { }
   }
 
   // Link pulled images via compose files from known working dirs

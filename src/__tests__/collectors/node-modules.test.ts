@@ -6,13 +6,13 @@ vi.mock("node:fs/promises", () => ({
   stat: vi.fn(),
 }));
 
-vi.mock("../../utils.js", () => ({
+vi.mock("../../darwin/utils.js", () => ({
   duSize: vi.fn(),
 }));
 
 import { readdir, readFile, stat } from "node:fs/promises";
-import { duSize } from "../../utils.js";
-import { scanNodeModulesPackages } from "../../collectors/node-modules.js";
+import { duSize } from "../../darwin/utils.js";
+import { scanNodeModulesPackages } from "../../darwin/collectors/node-modules.js";
 
 const mockReaddir = vi.mocked(readdir);
 const mockReadFile = vi.mocked(readFile);

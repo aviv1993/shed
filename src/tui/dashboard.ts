@@ -22,7 +22,7 @@ export class DashboardView implements Component {
     this.stale = stale;
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (!this.data) return;
@@ -70,7 +70,7 @@ export class DashboardView implements Component {
 
     const rows: [string, string, string][] = [];
     rows.push([
-      `Homebrew (${d.brew.packages.length})`,
+      `${process.platform === "win32" ? "Winget" : "Homebrew"} (${d.brew.packages.length})`,
       formatBytes(d.brew.totalBytes),
       d.brew.cacheBytes > 0 ? `${formatBytes(d.brew.cacheBytes)} cache` : "—",
     ]);

@@ -1,22 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { run, duSize } from "../utils.js";
+import type { BrewPackage, BrewData } from "../../types.js";
 
-export interface BrewPackage {
-  name: string;
-  version: string;
-  description: string;
-  installedOnRequest: boolean;
-  sizeBytes: number;
-  installedOn?: string;
-  dependencies: string[];
-}
-
-export interface BrewData {
-  packages: BrewPackage[];
-  cacheBytes: number;
-  totalBytes: number;
-}
 
 export async function collectBrew(): Promise<BrewData> {
   const [jsonOutput, cacheSize] = await Promise.all([

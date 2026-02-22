@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import type { DockerData, DockerImage, DockerContainer, DockerVolume } from "../collectors/docker.js";
+import type { DockerData, DockerImage, DockerContainer, DockerVolume } from "../types.js";
 import { formatBytes } from "../utils.js";
 
 
@@ -138,7 +138,7 @@ export class DockerView implements Component {
     }
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (!this.data) return;

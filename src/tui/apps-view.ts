@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import type { AppsData, AppEntry } from "../collectors/apps.js";
+import type { AppsData, AppEntry } from "../types.js";
 import { formatBytes } from "../utils.js";
 
 
@@ -29,7 +29,7 @@ export class AppsView implements Component {
     this.data = data;
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (!this.data) return;

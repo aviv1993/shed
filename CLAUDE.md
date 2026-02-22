@@ -1,6 +1,6 @@
 # shed
 
-macOS Dev Disk Usage TUI — shows disk usage for dev tools and lets you clean them up.
+Cross-platform Dev Disk Usage TUI (macOS & Windows) — shows disk usage for dev tools and lets you clean them up.
 
 ## Tech Stack
 - TypeScript + Node.js

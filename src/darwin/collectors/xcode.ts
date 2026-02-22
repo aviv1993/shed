@@ -1,17 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { duSize } from "../utils.js";
+import type { XcodeEntry, XcodeData } from "../../types.js";
 
-export interface XcodeEntry {
-  label: string;
-  path: string;
-  sizeBytes: number;
-}
-
-export interface XcodeData {
-  entries: XcodeEntry[];
-  totalBytes: number;
-}
 
 export async function collectXcode(): Promise<XcodeData> {
   const home = homedir();

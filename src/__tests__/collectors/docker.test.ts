@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../utils.js", () => ({
+vi.mock("../../darwin/utils.js", () => ({
   run: vi.fn(),
 }));
 
-import { run } from "../../utils.js";
-import { collectDocker } from "../../collectors/docker.js";
+import { run } from "../../darwin/utils.js";
+import { collectDocker } from "../../darwin/collectors/docker.js";
 
 const mockRun = vi.mocked(run);
 

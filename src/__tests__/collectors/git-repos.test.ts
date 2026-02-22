@@ -5,13 +5,13 @@ vi.mock("node:fs/promises", () => ({
   stat: vi.fn(),
 }));
 
-vi.mock("../../utils.js", () => ({
+vi.mock("../../darwin/utils.js", () => ({
   duSize: vi.fn(),
 }));
 
 import { readdir, stat } from "node:fs/promises";
-import { duSize } from "../../utils.js";
-import { collectGitRepos } from "../../collectors/git-repos.js";
+import { duSize } from "../../darwin/utils.js";
+import { collectGitRepos } from "../../darwin/collectors/git-repos.js";
 
 const mockReaddir = vi.mocked(readdir);
 const mockStat = vi.mocked(stat);

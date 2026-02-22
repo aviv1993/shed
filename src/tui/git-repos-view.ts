@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import type { GitReposData, GitRepoEntry } from "../collectors/git-repos.js";
+import type { GitReposData, GitRepoEntry } from "../types.js";
 import { formatBytes } from "../utils.js";
 
 
@@ -33,7 +33,7 @@ export class GitReposView implements Component {
     this.data = data;
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (!this.data) return;
@@ -112,7 +112,7 @@ export class GitReposView implements Component {
           if (!remotes.trim()) {
             warnings.push("No remote configured — local-only repo");
           }
-        } catch {}
+        } catch { }
       }
 
       // Check for stashed changes
@@ -125,7 +125,7 @@ export class GitReposView implements Component {
           const count = stashOut.trim().split("\n").length;
           warnings.push(`${count} stash entr${count > 1 ? "ies" : "y"}`);
         }
-      } catch {}
+      } catch { }
     } catch {
       // If git commands fail, proceed without warnings
     }

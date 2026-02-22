@@ -1,18 +1,8 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { duSize } from "../utils.js";
+import type { NpmGlobalPackage, NpmGlobalsData } from "../../types.js";
 
-export interface NpmGlobalPackage {
-  name: string;
-  version: string;
-  description: string;
-  sizeBytes: number;
-}
-
-export interface NpmGlobalsData {
-  packages: NpmGlobalPackage[];
-  totalBytes: number;
-}
 
 const GLOBAL_MODULES = "/opt/homebrew/lib/node_modules";
 
@@ -43,7 +33,7 @@ export async function collectNpmGlobals(): Promise<NpmGlobalsData> {
               if (pkg) packages.push(pkg);
             });
             await Promise.all(subPromises);
-          } catch {}
+          } catch { }
         })()
       );
     } else {

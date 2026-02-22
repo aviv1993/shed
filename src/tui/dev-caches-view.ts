@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import type { DevCachesData, DevCacheEntry, DevCacheGroup } from "../collectors/dev-caches.js";
+import type { DevCachesData, DevCacheEntry, DevCacheGroup } from "../types.js";
 import { formatBytes } from "../utils.js";
 
 
@@ -67,7 +67,7 @@ export class DevCachesView implements Component {
     }
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (!this.data) return;

@@ -1,7 +1,8 @@
 import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import { runCleanupAction, type CleanupAction, type CleanupActionsData } from "../cleanup.js";
+import { runCleanupAction } from "../darwin/cleanup.js";
+import type { CleanupAction, CleanupActionsData } from "../types.js";
 import { formatBytes } from "../utils.js";
 
 export class CleanupView implements Component {
@@ -27,7 +28,7 @@ export class CleanupView implements Component {
     this.actions = data.actions;
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (this.running) {

@@ -2,8 +2,8 @@ import { spawn } from "node:child_process";
 import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import type { NodeModulesData, NodeModulesEntry, NodeModulePackage } from "../collectors/node-modules.js";
-import { scanNodeModulesPackages } from "../collectors/node-modules.js";
+import type { NodeModulesData, NodeModulesEntry, NodeModulePackage } from "../types.js";
+import { scanNodeModulesPackages } from "../darwin/collectors/node-modules.js";
 import { formatBytes } from "../utils.js";
 
 
@@ -93,7 +93,7 @@ export class NodeModulesView implements Component {
     }
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     if (!this.data) return;

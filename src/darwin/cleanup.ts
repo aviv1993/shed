@@ -2,20 +2,8 @@ import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { duSize, run } from "./utils.js";
+import type { CleanupAction, CleanupActionsData } from "../types.js";
 
-export interface CleanupAction {
-  id: string;
-  label: string;
-  description: string;
-  command: string;
-  args: string[];
-  sizeBytes: number;
-  warning?: string;
-}
-
-export interface CleanupActionsData {
-  actions: CleanupAction[];
-}
 
 const home = homedir();
 
@@ -130,6 +118,6 @@ export function runCleanupAction(
   });
 
   return () => {
-    try { child.kill(); } catch {}
+    try { child.kill(); } catch { }
   };
 }

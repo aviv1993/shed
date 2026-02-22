@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../utils.js", () => ({
+vi.mock("../../darwin/utils.js", () => ({
   run: vi.fn(),
   duSize: vi.fn(),
 }));
 
-import { run, duSize } from "../../utils.js";
-import { collectBrew } from "../../collectors/brew.js";
+import { run, duSize } from "../../darwin/utils.js";
+import { collectBrew } from "../../darwin/collectors/brew.js";
 
 const mockRun = vi.mocked(run);
 const mockDuSize = vi.mocked(duSize);

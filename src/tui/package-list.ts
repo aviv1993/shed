@@ -2,8 +2,8 @@ import { spawn } from "node:child_process";
 import type { Component } from "@mariozechner/pi-tui";
 import { matchesKey, truncateToWidth } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import type { BrewPackage } from "../collectors/brew.js";
-import type { NpmGlobalPackage } from "../collectors/npm-globals.js";
+import type { BrewPackage } from "../types.js";
+import type { NpmGlobalPackage } from "../types.js";
 import type { LinkMap } from "../types.js";
 import { formatBytes } from "../utils.js";
 interface PackageItem {
@@ -65,7 +65,7 @@ export class PackageListView implements Component {
     this.scrollOffset = 0;
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   handleInput(data: string): void {
     switch (this.state.mode) {

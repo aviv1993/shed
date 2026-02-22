@@ -1,12 +1,8 @@
 import { duSize, run } from "../utils.js";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import type { NpmCacheData } from "../../types.js";
 
-export interface NpmCacheData {
-  npmCacheBytes: number;
-  pnpmStoreBytes: number;
-  totalBytes: number;
-}
 
 export async function collectNpmCache(): Promise<NpmCacheData> {
   const home = homedir();

@@ -1,15 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { duSize } from "../utils.js";
+import type { AppEntry, AppsData } from "../../types.js";
 
-export interface AppEntry {
-  name: string;
-  sizeBytes: number;
-}
-
-export interface AppsData {
-  apps: AppEntry[];
-  totalBytes: number;
-}
 
 export async function collectApps(): Promise<AppsData> {
   let entries: string[];

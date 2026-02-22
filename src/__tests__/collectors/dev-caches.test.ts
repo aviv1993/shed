@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../../utils.js", () => ({
+vi.mock("../../darwin/utils.js", () => ({
   duSize: vi.fn(),
 }));
 
-import { duSize } from "../../utils.js";
-import { collectDevCaches } from "../../collectors/dev-caches.js";
+import { duSize } from "../../darwin/utils.js";
+import { collectDevCaches } from "../../darwin/collectors/dev-caches.js";
 
 const mockDuSize = vi.mocked(duSize);
 
@@ -54,7 +54,7 @@ describe("collectDevCaches", () => {
   it("includes warning messages for non-cleanable entries", async () => {
     // Make VS Code Extensions have size
     mockDuSize.mockImplementation(async (path) => {
-      if (typeof path === "string" && path.includes("vscode/extensions")) return 500 * 1024 * 1024;
+      if (typeof path === "string" && path.includes("vscode") && path.includes("extensions")) return 500 * 1024 * 1024;
       return 0;
     });
 

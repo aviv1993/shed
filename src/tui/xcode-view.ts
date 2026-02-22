@@ -1,6 +1,6 @@
 import type { Component } from "@mariozechner/pi-tui";
 import chalk from "chalk";
-import type { XcodeData } from "../collectors/xcode.js";
+import type { XcodeData } from "../types.js";
 import { formatBytes } from "../utils.js";
 
 export class XcodeView implements Component {
@@ -10,7 +10,7 @@ export class XcodeView implements Component {
     this.data = data;
   }
 
-  invalidate(): void {}
+  invalidate(): void { }
 
   render(width: number): string[] {
     const lines: string[] = [];

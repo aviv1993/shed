@@ -2,22 +2,8 @@ import { readdir, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, basename } from "node:path";
 import { duSize } from "../utils.js";
+import type { GitRepoEntry, GitReposData } from "../../types.js";
 
-export interface GitRepoEntry {
-  name: string;
-  path: string;
-  sizeBytes: number;
-  gitSizeBytes: number; // size of .git directory alone
-  nodeModulesSizeBytes: number;
-  linkedDockerImages: string[];
-}
-
-export interface GitReposData {
-  repos: GitRepoEntry[];
-  totalBytes: number;
-  totalGitBytes: number;
-  totalNodeModulesBytes: number;
-}
 
 const SKIP_DIRS = new Set([
   "Library", "Desktop", "Downloads", "Documents", "Pictures", "Music",
@@ -132,7 +118,7 @@ async function findGitRepos(
   const promises: Promise<void>[] = [];
   for (const entry of entries) {
     if (entry.startsWith(".") || entry === "node_modules" || entry === "dist" ||
-        entry === "build" || entry === ".next" || entry === "vendor") continue;
+      entry === "build" || entry === ".next" || entry === "vendor") continue;
 
     const subPath = join(dirPath, entry);
     promises.push(
@@ -142,7 +128,7 @@ async function findGitRepos(
             await findGitRepos(subPath, results, depth + 1, maxDepth);
           }
         })
-        .catch(() => {})
+        .catch(() => { })
     );
   }
 

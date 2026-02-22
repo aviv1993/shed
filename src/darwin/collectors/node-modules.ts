@@ -2,24 +2,8 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { duSize } from "../utils.js";
+import type { NodeModulePackage, NodeModulesEntry, NodeModulesData } from "../../types.js";
 
-export interface NodeModulePackage {
-  name: string;
-  version: string;
-  sizeBytes: number;
-}
-
-export interface NodeModulesEntry {
-  projectName: string;
-  path: string;
-  sizeBytes: number;
-  packages: NodeModulePackage[];
-}
-
-export interface NodeModulesData {
-  entries: NodeModulesEntry[];
-  totalBytes: number;
-}
 
 const SKIP_DIRS = new Set([
   "Library", "Desktop", "Downloads", "Documents", "Pictures", "Music",
@@ -89,14 +73,14 @@ async function findNodeModules(
           packages: [],
         });
       }
-    } catch {}
+    } catch { }
   }
 
   const promises: Promise<void>[] = [];
   for (const entry of entries) {
     if (entry === "node_modules" || entry === ".git" || entry === "dist" ||
-        entry === "build" || entry === ".next" || entry === "vendor" ||
-        entry.startsWith(".")) continue;
+      entry === "build" || entry === ".next" || entry === "vendor" ||
+      entry.startsWith(".")) continue;
 
     const subPath = join(dirPath, entry);
     promises.push(
@@ -106,7 +90,7 @@ async function findNodeModules(
             await findNodeModules(subPath, projectName, results, depth + 1);
           }
         })
-        .catch(() => {})
+        .catch(() => { })
     );
   }
 
@@ -140,7 +124,7 @@ export async function scanNodeModulesPackages(nmPath: string): Promise<NodeModul
                 if (pkg) packages.push(pkg);
               })
             );
-          } catch {}
+          } catch { }
         })()
       );
     } else {

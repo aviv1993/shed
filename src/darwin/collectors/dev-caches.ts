@@ -1,26 +1,8 @@
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { duSize } from "../utils.js";
+import type { DevCacheEntry, DevCacheGroup, DevCachesData } from "../../types.js";
 
-export interface DevCacheEntry {
-  label: string;
-  path: string;
-  sizeBytes: number;
-  cleanable: boolean;
-  warningMessage?: string;
-}
-
-export interface DevCacheGroup {
-  tool: string;
-  entries: DevCacheEntry[];
-  totalBytes: number;
-}
-
-export interface DevCachesData {
-  groups: DevCacheGroup[];
-  entries: DevCacheEntry[]; // flat list of all entries
-  totalBytes: number;
-}
 
 interface Candidate {
   tool: string;

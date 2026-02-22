@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("../utils.js", () => ({
+vi.mock("../darwin/utils.js", () => ({
   duSize: vi.fn().mockResolvedValue(0),
   run: vi.fn().mockResolvedValue(""),
 }));
@@ -20,8 +20,9 @@ vi.mock("node:child_process", () => {
   };
 });
 
-import { duSize, run } from "../utils.js";
-import { collectCleanupActions, runCleanupAction, type CleanupAction } from "../cleanup.js";
+import { duSize, run } from "../darwin/utils.js";
+import { collectCleanupActions, runCleanupAction } from "../darwin/cleanup.js";
+import type { CleanupAction } from "../types.js";
 
 const mockDuSize = vi.mocked(duSize);
 const mockRun = vi.mocked(run);
